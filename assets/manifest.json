@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "gameVersion": "5.0.1.0",
+  "common": {
+    "relativePath": "BrgGame/CookedPCConsole/AS_CH_Main_Male_Common_SF.upk",
+    "size": 24315267,
+    "profiles": {
+      "stock": {
+        "sha1": "757EC07E9846C817FB16780BB5C5ADCAB8A75588",
+        "patch": "common-stock.lidxor",
+        "label": "순정",
+        "guardReady": 0.06333337724208832,
+        "start": 0.10266699641942978,
+        "duration": 0.10400000214576721,
+        "probabilityUnlocked": false
+      },
+      "soft": {
+        "sha1": "5733F80DFE8EA2DE637F5586025B0764D3F7C410",
+        "patch": "common-soft.lidxor",
+        "label": "완화",
+        "guardReady": 0.04,
+        "start": 0.06,
+        "duration": 0.85,
+        "probabilityUnlocked": true
+      },
+      "wide": {
+        "sha1": "05FDFE1EA428F41702572EE1C6AFAB23F6A76E70",
+        "patch": "common-wide.lidxor",
+        "label": "넓게",
+        "guardReady": 0.025,
+        "start": 0.035,
+        "duration": 1.0,
+        "probabilityUnlocked": true
+      },
+      "iron": {
+        "sha1": "3E339E7CA527C287C32AA560CEEFBAC47DC44522",
+        "patch": "common-iron.lidxor",
+        "label": "다리미급",
+        "guardReady": 0.015,
+        "start": 0.02,
+        "duration": 1.2,
+        "probabilityUnlocked": true
+      }
+    }
+  },
+  "groggy": {
+    "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
+    "size": 179212648,
+    "profiles": {
+      "off": {
+        "sha1": "F623DE7ED838A2F7A359557D6C8FFFA10E2DE3DE",
+        "patch": "brggame-groggy-off.lidxor",
+        "label": "OFF (순정 Flip)"
+      },
+      "on": {
+        "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
+        "patch": "brggame-groggy-on.lidxor",
+        "label": "ON (직접 공격자 Groggy)"
+      }
+    }
+  },
+  "executable": {
+    "relativePath": "Binaries/Win64/BrgGame-Steam.exe",
+    "manifestEntries": {
+      "as_ch_main_male_common_sf.upk": 1,
+      "brggame.upk": 2
+    }
+  },
+  "patchEncoding": "xor-from-stock-v1"
+}

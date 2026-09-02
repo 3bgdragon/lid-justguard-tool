@@ -1,0 +1,14 @@
+{
+  "name": "lid-justguard-tool",
+  "version": "1.0.0",
+  "description": "LET IT DIE 5.0.1.0 offline Just Guard timing, probability and Groggy patch/restore tool",
+  "license": "MIT",
+  "private": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check lid-justguard.js",
+    "status": "node lid-justguard.js status"
+  }
+}

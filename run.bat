@@ -1,0 +1,25 @@
+@echo off
+setlocal
+chcp 65001 >nul
+
+fltmc >nul 2>nul
+if errorlevel 1 (
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs"
+  exit /b
+)
+
+set "NODE_EXE=%ProgramFiles%\nodejs\node.exe"
+if exist "%NODE_EXE%" goto run_tool
+
+set "NODE_EXE=node.exe"
+where node.exe >nul 2>nul
+if not errorlevel 1 goto run_tool
+
+echo Node.js was not found. Install Node.js 18 or newer and try again.
+pause
+exit /b 1
+
+:run_tool
+"%NODE_EXE%" "%~dp0lid-justguard.js" %*
+echo.
+pause
