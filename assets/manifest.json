@@ -51,25 +51,45 @@
         "sha1": "F623DE7ED838A2F7A359557D6C8FFFA10E2DE3DE",
         "patch": "brggame-groggy-off.lidxor",
         "groggy": "off",
-        "meleeGuard": "off"
+        "meleeGuard": "off",
+        "elementalNoDamage": false
       },
       "on-off": {
         "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
         "patch": "brggame-groggy-on.lidxor",
         "groggy": "on",
-        "meleeGuard": "off"
+        "meleeGuard": "off",
+        "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "2DA3E88B05A834C530C8DBFDE9B195943A29FC49",
+        "sha1": "1B82F2C30115F52EC8BBF118AC71F88BF1F31BEF",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
-        "meleeGuard": "on"
+        "meleeGuard": "on",
+        "elementalNoDamage": true
       },
       "on-on": {
-        "sha1": "9CF81F5783A4C411D5A58274422660004D9090C2",
+        "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
         "patch": "brggame-melee-on-groggy-on.lidxor",
         "groggy": "on",
-        "meleeGuard": "on"
+        "meleeGuard": "on",
+        "elementalNoDamage": true
+      },
+      "off-on-v1.1": {
+        "sha1": "2DA3E88B05A834C530C8DBFDE9B195943A29FC49",
+        "patch": "brggame-melee-on-groggy-off-v1.1.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": false,
+        "legacy": true
+      },
+      "on-on-v1.1": {
+        "sha1": "9CF81F5783A4C411D5A58274422660004D9090C2",
+        "patch": "brggame-melee-on-groggy-on-v1.1.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": false,
+        "legacy": true
       }
     }
   },

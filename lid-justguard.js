@@ -219,9 +219,11 @@ function printStatus(status) {
     const runtime = manifest.groggy.profiles[status.groggy.profile];
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
+    console.log(`근접 속성 후속 피해: ${runtime.elementalNoDamage ? '저스트가드 시 차단' : '순정'}`);
   } else {
     console.log(`저스트가드 그로기: 알 수 없음 (${status.groggy.hash})`);
     console.log('근접무기 방어 제한: 알 수 없음');
+    console.log('근접 속성 후속 피해: 알 수 없음');
   }
   console.log(`실행 파일 해시 연결: ${executableIsValid(status) ? '정상' : '불일치/확인 불가'}`);
 }
@@ -554,7 +556,7 @@ async function interactive(gameDirectory, rl) {
       }
       console.log('\n근접무기 저스트가드 불가 제한');
       console.log('1. OFF — 순정 제한 유지');
-      console.log('2. ON — 살아 있는 직접 공격자의 근접 공격 제한 해제');
+      console.log('2. ON — 직접 근접 공격 제한 해제 + 성공 시 화염·전기·독 후속 피해 차단');
       const meleeGuardChoice = Number((await rl.question('근접무기 방어 선택: ')).trim());
       const meleeGuard = MELEE_GUARD_ORDER[meleeGuardChoice - 1];
       if (!meleeGuard) {
