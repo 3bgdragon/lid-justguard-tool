@@ -1,5 +1,5 @@
 {
-  "format": 1,
+  "format": 2,
   "gameVersion": "5.0.1.0",
   "common": {
     "relativePath": "BrgGame/CookedPCConsole/AS_CH_Main_Male_Common_SF.upk",
@@ -47,15 +47,29 @@
     "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
     "size": 179212648,
     "profiles": {
-      "off": {
+      "off-off": {
         "sha1": "F623DE7ED838A2F7A359557D6C8FFFA10E2DE3DE",
         "patch": "brggame-groggy-off.lidxor",
-        "label": "OFF (순정 Flip)"
+        "groggy": "off",
+        "meleeGuard": "off"
       },
-      "on": {
+      "on-off": {
         "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
         "patch": "brggame-groggy-on.lidxor",
-        "label": "ON (직접 공격자 Groggy)"
+        "groggy": "on",
+        "meleeGuard": "off"
+      },
+      "off-on": {
+        "sha1": "2DA3E88B05A834C530C8DBFDE9B195943A29FC49",
+        "patch": "brggame-melee-on-groggy-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on"
+      },
+      "on-on": {
+        "sha1": "9CF81F5783A4C411D5A58274422660004D9090C2",
+        "patch": "brggame-melee-on-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on"
       }
     }
   },

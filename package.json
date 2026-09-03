@@ -1,7 +1,7 @@
 {
   "name": "lid-justguard-tool",
-  "version": "1.0.0",
-  "description": "LET IT DIE 5.0.1.0 offline Just Guard timing, probability and Groggy patch/restore tool",
+  "version": "1.1.0",
+  "description": "LET IT DIE 5.0.1.0 offline Just Guard timing, melee restriction and Groggy patch/restore tool",
   "license": "MIT",
   "private": false,
   "engines": {

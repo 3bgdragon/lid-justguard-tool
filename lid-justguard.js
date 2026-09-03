@@ -14,6 +14,7 @@ const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 
 const STRENGTH_ORDER = ['stock', 'soft', 'wide', 'iron'];
 const GROGGY_ORDER = ['off', 'on'];
+const MELEE_GUARD_ORDER = ['off', 'on'];
 const FILE_KEYS = ['common', 'groggy', 'executable'];
 
 function fail(message) {
@@ -125,6 +126,21 @@ function identifyProfile(filePath, configuration) {
   return { profile, hash, size, supportedSize: size === configuration.size };
 }
 
+function findRuntimeProfile(groggyName, meleeGuardName) {
+  return Object.entries(manifest.groggy.profiles)
+    .find(([, profile]) => profile.groggy === groggyName && profile.meleeGuard === meleeGuardName)?.[0];
+}
+
+function groggyLabel(name) {
+  return name === 'on' ? 'ON (직접 공격자 Groggy)' : 'OFF (순정 Flip)';
+}
+
+function meleeGuardLabel(name) {
+  return name === 'on'
+    ? 'ON (근접무기 저스트가드 불가 제한 해제)'
+    : 'OFF (순정 제한)';
+}
+
 function findAll(buffer, needle) {
   const positions = [];
   let cursor = 0;
@@ -200,9 +216,12 @@ function printStatus(status) {
     console.log(`저스트가드 강도: 알 수 없음 (${status.common.hash})`);
   }
   if (status.groggy.profile) {
-    console.log(`저스트가드 그로기: ${manifest.groggy.profiles[status.groggy.profile].label}`);
+    const runtime = manifest.groggy.profiles[status.groggy.profile];
+    console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
+    console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
   } else {
     console.log(`저스트가드 그로기: 알 수 없음 (${status.groggy.hash})`);
+    console.log('근접무기 방어 제한: 알 수 없음');
   }
   console.log(`실행 파일 해시 연결: ${executableIsValid(status) ? '정상' : '불일치/확인 불가'}`);
 }
@@ -391,20 +410,23 @@ function transactionalReplace(replacements) {
   }
 }
 
-function applySettings(gameDirectory, strengthName, groggyName) {
+function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) {
   if (!manifest.common.profiles[strengthName]) fail(`알 수 없는 강도입니다: ${strengthName}`);
-  if (!manifest.groggy.profiles[groggyName]) fail(`알 수 없는 그로기 설정입니다: ${groggyName}`);
+  if (!GROGGY_ORDER.includes(groggyName)) fail(`알 수 없는 그로기 설정입니다: ${groggyName}`);
+  if (!MELEE_GUARD_ORDER.includes(meleeGuardName)) fail(`알 수 없는 근접무기 방어 설정입니다: ${meleeGuardName}`);
+  const targetRuntimeName = findRuntimeProfile(groggyName, meleeGuardName);
+  if (!targetRuntimeName) fail(`지원하지 않는 조합입니다: 그로기 ${groggyName}, 근접 방어 ${meleeGuardName}`);
   if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
 
   const status = readStatus(gameDirectory);
   assertSupported(status);
-  if (status.common.profile === strengthName && status.groggy.profile === groggyName) {
+  if (status.common.profile === strengthName && status.groggy.profile === targetRuntimeName) {
     return { changed: false, status };
   }
 
-  const backupPath = createBackup(status, `apply:${strengthName}:${groggyName}`);
+  const backupPath = createBackup(status, `apply:${strengthName}:${groggyName}:${meleeGuardName}`);
   const commonProfile = manifest.common.profiles[strengthName];
-  const groggyProfile = manifest.groggy.profiles[groggyName];
+  const groggyProfile = manifest.groggy.profiles[targetRuntimeName];
   const temps = {
     common: `${status.paths.common}.lid-jg.tmp`,
     groggy: `${status.paths.groggy}.lid-jg.tmp`,
@@ -435,7 +457,7 @@ function applySettings(gameDirectory, strengthName, groggyName) {
   }
 
   const verified = readStatus(gameDirectory);
-  if (verified.common.profile !== strengthName || verified.groggy.profile !== groggyName || !executableIsValid(verified)) {
+  if (verified.common.profile !== strengthName || verified.groggy.profile !== targetRuntimeName || !executableIsValid(verified)) {
     fail(`적용 후 검증에 실패했습니다. 변경 전 백업: ${backupPath}`);
   }
   return { changed: true, backupPath, status: verified };
@@ -530,9 +552,18 @@ async function interactive(gameDirectory, rl) {
         console.log('잘못된 선택입니다.');
         continue;
       }
+      console.log('\n근접무기 저스트가드 불가 제한');
+      console.log('1. OFF — 순정 제한 유지');
+      console.log('2. ON — 살아 있는 직접 공격자의 근접 공격 제한 해제');
+      const meleeGuardChoice = Number((await rl.question('근접무기 방어 선택: ')).trim());
+      const meleeGuard = MELEE_GUARD_ORDER[meleeGuardChoice - 1];
+      if (!meleeGuard) {
+        console.log('잘못된 선택입니다.');
+        continue;
+      }
       const strengthLabel = manifest.common.profiles[strength].label;
-      if (!await confirm(rl, `${strengthLabel} / 그로기 ${groggy.toUpperCase()}를 적용할까요?`, false)) continue;
-      const result = applySettings(gameDirectory, strength, groggy);
+      if (!await confirm(rl, `${strengthLabel} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, false)) continue;
+      const result = applySettings(gameDirectory, strength, groggy, meleeGuard);
       console.log(result.changed ? `\n적용 완료\n백업: ${result.backupPath}` : '\n이미 선택한 설정입니다.');
       continue;
     }
@@ -587,13 +618,14 @@ async function main() {
     if (command === 'apply') {
       const strength = String(parsed.positional[1] || '').toLowerCase();
       const groggy = String(parsed.positional[2] || '').toLowerCase();
-      if (!manifest.common.profiles[strength] || !manifest.groggy.profiles[groggy]) {
-        fail('사용법: apply [stock|soft|wide|iron] [off|on]');
+      const meleeGuard = String(parsed.positional[3] || 'off').toLowerCase();
+      if (!manifest.common.profiles[strength] || !GROGGY_ORDER.includes(groggy) || !MELEE_GUARD_ORDER.includes(meleeGuard)) {
+        fail('사용법: apply [stock|soft|wide|iron] [그로기 off|on] [근접 방어 off|on]');
       }
       const status = readStatus(gameDirectory);
       printStatus(status);
-      if (!await confirm(rl, `${manifest.common.profiles[strength].label} / 그로기 ${groggy.toUpperCase()}를 적용할까요?`, parsed.yes)) return;
-      const result = applySettings(gameDirectory, strength, groggy);
+      if (!await confirm(rl, `${manifest.common.profiles[strength].label} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, parsed.yes)) return;
+      const result = applySettings(gameDirectory, strength, groggy, meleeGuard);
       console.log(result.changed ? `적용 완료\n백업: ${result.backupPath}` : '이미 선택한 설정입니다.');
       return;
     }
@@ -608,7 +640,7 @@ async function main() {
       console.log(`복원 직전 안전 백업: ${result.safetyBackup}`);
       return;
     }
-    fail('사용법: node lid-justguard.js [status | backup | apply 강도 그로기 | restore] [--game 경로] [--yes]');
+    fail('사용법: node lid-justguard.js [status | backup | apply 강도 그로기 근접방어 | restore] [--game 경로] [--yes]');
   } finally {
     rl.close();
   }
