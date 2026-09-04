@@ -220,6 +220,15 @@ function printStatus(status) {
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
     console.log(`근접 속성 후속 피해: ${runtime.elementalNoDamage ? '저스트가드 시 차단' : '순정'}`);
+    if (runtime.aiJustGuardDisabled) {
+      console.log('적 AI 저스트가드: 차단 (플레이어 전용)');
+    }
+    if (runtime.pickaxeGuardEnabled) {
+      console.log('곡괭이 공격 방어: 저스트가드 허용');
+    }
+    if (runtime.extendedVfxEnabled) {
+      console.log('확장 판정 시각 이펙트: 활성화 (0.242초 조기 소멸 방지)');
+    }
   } else {
     console.log(`저스트가드 그로기: 알 수 없음 (${status.groggy.hash})`);
     console.log('근접무기 방어 제한: 알 수 없음');

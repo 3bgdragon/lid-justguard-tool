@@ -62,11 +62,14 @@
         "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "1B82F2C30115F52EC8BBF118AC71F88BF1F31BEF",
+        "sha1": "33F9DA98B10A0853337B3C700DD4F113E209CE86",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
-        "elementalNoDamage": true
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "extendedVfxEnabled": true
       },
       "on-on": {
         "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
@@ -74,6 +77,14 @@
         "groggy": "on",
         "meleeGuard": "on",
         "elementalNoDamage": true
+      },
+      "off-on-v1.2": {
+        "sha1": "1B82F2C30115F52EC8BBF118AC71F88BF1F31BEF",
+        "patch": "brggame-melee-on-groggy-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
       },
       "off-on-v1.1": {
         "sha1": "2DA3E88B05A834C530C8DBFDE9B195943A29FC49",
