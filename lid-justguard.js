@@ -123,7 +123,10 @@ function identifyProfile(filePath, configuration) {
   const hash = sha1File(filePath);
   const profile = Object.entries(configuration.profiles)
     .find(([, value]) => value.sha1 === hash)?.[0];
-  return { profile, hash, size, supportedSize: size === configuration.size };
+  const supportedSize = Array.isArray(configuration.size)
+    ? configuration.size.includes(size)
+    : size === configuration.size;
+  return { profile, hash, size, supportedSize };
 }
 
 function findRuntimeProfile(groggyName, meleeGuardName) {

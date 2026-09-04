@@ -45,7 +45,7 @@
   },
   "groggy": {
     "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
-    "size": 179212648,
+    "size": [179212648, 179536462],
     "profiles": {
       "off-off": {
         "sha1": "F623DE7ED838A2F7A359557D6C8FFFA10E2DE3DE",
@@ -53,6 +53,14 @@
         "groggy": "off",
         "meleeGuard": "off",
         "elementalNoDamage": false
+      },
+      "off-off-steam": {
+        "sha1": "C4D8C0EFBCBDB0CDE3E3CF1F5DA07EFB1996C207",
+        "patch": "brggame-groggy-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "legacy": true
       },
       "on-off": {
         "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
@@ -62,7 +70,7 @@
         "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "33F9DA98B10A0853337B3C700DD4F113E209CE86",
+        "sha1": "136A69C28E1375E45AFCBFCB85776856F7ADA414",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
