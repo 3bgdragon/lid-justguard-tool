@@ -70,7 +70,7 @@
         "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "136A69C28E1375E45AFCBFCB85776856F7ADA414",
+        "sha1": "ECE6312454B7B37C5C069A076A698A74F1F95DD6",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
