@@ -69,3 +69,16 @@ node .\lid-justguard.js restore
 ```powershell
 node .\lid-justguard.js status --game "C:\Program Files (x86)\Steam\steamapps\common\LET IT DIE"
 ```
+# 1.2.1: 특정 사용자 수정본의 공격 중 멈춤 복구
+
+2026-09-05 사용자 수정본에서 `BrgPawn_Base.IsCanGuardState`가 조건식 중간으로 점프해 무한 반복하는 문제가 확인되었습니다. `repair-guard-state`는 확인된 SHA-1 `266C9712F6E9EB4FB30110D078BC0377B678B30B`에만 적용됩니다. 기존 공개 프로필 전체에서 발생하는 문제라는 의미는 아닙니다.
+
+게임 종료 후 다음 명령을 실행합니다.
+
+```text
+node lid-justguard.js repair-guard-state --yes --game "C:\Program Files (x86)\Steam\steamapps\common\LET IT DIE"
+```
+
+런타임 점프 목적지 `0x17`을 다음 조건문의 시작인 `0x1B`로 교정합니다. 스크립트 길이와 가드 제한 우회 의도는 유지합니다. 애니메이션·세이브·DB는 수정하지 않고, 실행 파일에서는 BrgGame 해시 두 곳만 갱신해 기존 텐고쿠 네이티브 변경도 보존합니다. 알 수 없는 패키지/해시 불일치는 거부합니다.
+
+변경 전 세 파일을 `backups/guard-repair-*`에 백업합니다. 기존 `restore "백업 폴더" --yes --game "설치 폴더"`로 복원할 수 있지만 오류도 되돌아옵니다. 복구한 사용자 수정본은 기존 강도 변경 프로필과 별개이므로 일반 `apply`/`status`에서 미지원으로 표시될 수 있습니다. 다른 패치로 덮어쓰지 마세요. 정적 검증은 완료했으며 전투 재현 검증은 별도로 필요합니다.

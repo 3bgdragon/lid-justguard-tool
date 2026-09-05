@@ -611,6 +611,13 @@ async function main() {
       printStatus(readStatus(gameDirectory));
       return;
     }
+    if (command === 'repair-guard-state') {
+      if (isGameRunning()) fail('LET IT DIE를 완전히 종료한 뒤 다시 실행하세요.');
+      if (!await confirm(rl, '확인된 가드 스크립트의 잘못된 점프를 수정할까요?', parsed.yes)) return;
+      const result = require('./guard-state-repair').repair(gameDirectory, path.join(__dirname, 'backups'));
+      console.log(result.changed ? `가드 분기 수정 완료. 변경 전 백업: ${result.backupPath}` : '이미 수정되어 있습니다.');
+      return;
+    }
     if (command === 'backup') {
       if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
       const backupPath = createBackup(readStatus(gameDirectory), 'manual-cli');
