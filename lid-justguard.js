@@ -123,7 +123,10 @@ function identifyProfile(filePath, configuration) {
   const hash = sha1File(filePath);
   const profile = Object.entries(configuration.profiles)
     .find(([, value]) => value.sha1 === hash)?.[0];
-  return { profile, hash, size, supportedSize: size === configuration.size };
+  const supportedSize = Array.isArray(configuration.size)
+    ? configuration.size.includes(size)
+    : size === configuration.size;
+  return { profile, hash, size, supportedSize };
 }
 
 function findRuntimeProfile(groggyName, meleeGuardName) {
@@ -220,6 +223,18 @@ function printStatus(status) {
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
     console.log(`근접 속성 후속 피해: ${runtime.elementalNoDamage ? '저스트가드 시 차단' : '순정'}`);
+    if (runtime.aiJustGuardDisabled) {
+      console.log('적 AI 저스트가드: 차단 (플레이어 전용)');
+    }
+    if (runtime.pickaxeGuardEnabled) {
+      console.log('곡괭이 공격 방어: 저스트가드 허용');
+    }
+    if (runtime.battleAxeGuardEnabled) {
+      console.log('양손도끼 공격 방어: 저스트가드 허용');
+    }
+    if (runtime.extendedVfxEnabled) {
+      console.log('확장 판정 시각 이펙트: 활성화 (0.242초 조기 소멸 방지)');
+    }
   } else {
     console.log(`저스트가드 그로기: 알 수 없음 (${status.groggy.hash})`);
     console.log('근접무기 방어 제한: 알 수 없음');
@@ -281,7 +296,9 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
   } finally {
     fs.closeSync(handle);
   }
-  if (fs.statSync(tempPath).size !== expectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
+  const tempSize = fs.statSync(tempPath).size;
+  const isExpectedSize = Array.isArray(expectedSize) ? expectedSize.includes(tempSize) : tempSize === expectedSize;
+  if (!isExpectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
   const actualHash = sha1File(tempPath);
   if (actualHash !== targetProfile.sha1) {
     fail(`임시 UPK SHA-1 검증에 실패했습니다: ${actualHash} (예상 ${targetProfile.sha1})`);
