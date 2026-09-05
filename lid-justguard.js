@@ -229,6 +229,9 @@ function printStatus(status) {
     if (runtime.pickaxeGuardEnabled) {
       console.log('곡괭이 공격 방어: 저스트가드 허용');
     }
+    if (runtime.battleAxeGuardEnabled) {
+      console.log('양손도끼 공격 방어: 저스트가드 허용');
+    }
     if (runtime.extendedVfxEnabled) {
       console.log('확장 판정 시각 이펙트: 활성화 (0.242초 조기 소멸 방지)');
     }
@@ -293,7 +296,9 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
   } finally {
     fs.closeSync(handle);
   }
-  if (fs.statSync(tempPath).size !== expectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
+  const tempSize = fs.statSync(tempPath).size;
+  const isExpectedSize = Array.isArray(expectedSize) ? expectedSize.includes(tempSize) : tempSize === expectedSize;
+  if (!isExpectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
   const actualHash = sha1File(tempPath);
   if (actualHash !== targetProfile.sha1) {
     fail(`임시 UPK SHA-1 검증에 실패했습니다: ${actualHash} (예상 ${targetProfile.sha1})`);

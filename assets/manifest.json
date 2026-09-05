@@ -15,7 +15,7 @@
         "probabilityUnlocked": false
       },
       "soft": {
-        "sha1": "5733F80DFE8EA2DE637F5586025B0764D3F7C410",
+        "sha1": "41741F8C16808DDAE5DA15EC96F4726C2D9EEDB1",
         "patch": "common-soft.lidxor",
         "label": "완화",
         "guardReady": 0.04,
@@ -24,16 +24,16 @@
         "probabilityUnlocked": true
       },
       "wide": {
-        "sha1": "05FDFE1EA428F41702572EE1C6AFAB23F6A76E70",
+        "sha1": "BB64ABBF7FC79010DF9725C399922DF70DFA096F",
         "patch": "common-wide.lidxor",
         "label": "넓게",
         "guardReady": 0.025,
         "start": 0.035,
-        "duration": 1.0,
+        "duration": 1,
         "probabilityUnlocked": true
       },
       "iron": {
-        "sha1": "3E339E7CA527C287C32AA560CEEFBAC47DC44522",
+        "sha1": "25963351F99CC2AC4358123B5511DA45B5FABE9A",
         "patch": "common-iron.lidxor",
         "label": "다리미급",
         "guardReady": 0.015,
@@ -45,7 +45,10 @@
   },
   "groggy": {
     "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
-    "size": [179212648, 179536462],
+    "size": [
+      179212648,
+      179536462
+    ],
     "profiles": {
       "off-off": {
         "sha1": "F623DE7ED838A2F7A359557D6C8FFFA10E2DE3DE",
@@ -70,13 +73,14 @@
         "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "ECE6312454B7B37C5C069A076A698A74F1F95DD6",
+        "sha1": "266C9712F6E9EB4FB30110D078BC0377B678B30B",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
         "elementalNoDamage": true,
         "aiJustGuardDisabled": true,
         "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
         "extendedVfxEnabled": true
       },
       "on-on": {
@@ -109,6 +113,26 @@
         "meleeGuard": "on",
         "elementalNoDamage": false,
         "legacy": true
+      },
+      "off-on-fulljg": {
+        "sha1": "48254932A0F71F80102710FF6BB29270280AD247",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "fullJustGuardEnabled": true
+      },
+      "off-on-ultimate": {
+        "sha1": "753CED66437E82EE73E1F1ABD37346A120F37A35",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "playerJustGuardDirectReturnTrue": true
       }
     }
   },
