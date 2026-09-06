@@ -16,6 +16,10 @@ const STRENGTH_ORDER = ['stock', 'soft', 'wide', 'iron'];
 const GROGGY_ORDER = ['off', 'on'];
 const MELEE_GUARD_ORDER = ['off', 'on'];
 const FILE_KEYS = ['common', 'groggy', 'executable'];
+const STOCK_HASHES = {
+  'brggame.upk': 'C4D8C0EFBCBDB0CDE3E3CF1F5DA07EFB1996C207',
+  'as_ch_main_male_common_sf.upk': '757EC07E9846C817FB16780BB5C5ADCAB8A75588',
+};
 
 function fail(message) {
   const error = new Error(message);
@@ -278,10 +282,30 @@ function xorEntries(handle, entries) {
 
 function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize, tempPath) {
   if (fs.existsSync(tempPath)) fail(`이전 작업의 임시 파일이 남아 있습니다: ${tempPath}`);
-  fs.copyFileSync(sourcePath, tempPath, fs.constants.COPYFILE_EXCL);
+
+  const fileName = path.basename(sourcePath).toLowerCase();
+  const stockHash = STOCK_HASHES[fileName];
+  const bakPath = `${sourcePath}.bak`;
+
+  let baseFromBak = false;
+  if (stockHash && fs.existsSync(bakPath)) {
+    const bakHash = sha1File(bakPath);
+    if (bakHash === stockHash) {
+      fs.copyFileSync(bakPath, tempPath, fs.constants.COPYFILE_EXCL);
+      baseFromBak = true;
+    }
+  }
+
+  if (!baseFromBak) {
+    fs.copyFileSync(sourcePath, tempPath, fs.constants.COPYFILE_EXCL);
+    if (stockHash && !fs.existsSync(bakPath) && sha1File(sourcePath) === stockHash) {
+      try { fs.copyFileSync(sourcePath, bakPath); } catch {}
+    }
+  }
+
   const handle = fs.openSync(tempPath, 'r+');
   try {
-    const currentEntries = readPatch(path.join(ASSET_DIRECTORY, currentProfile.patch));
+    const currentEntries = baseFromBak ? [] : readPatch(path.join(ASSET_DIRECTORY, currentProfile.patch));
     const targetEntries = readPatch(path.join(ASSET_DIRECTORY, targetProfile.patch));
     for (const entry of [...currentEntries, ...targetEntries]) {
       if (entry.offset + entry.payload.length > expectedSize) {
@@ -290,7 +314,9 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
     }
     // A profile delta is defined relative to stock. Applying the current
     // delta normalizes to stock; applying the target delta selects the target.
-    xorEntries(handle, currentEntries);
+    if (!baseFromBak) {
+      xorEntries(handle, currentEntries);
+    }
     xorEntries(handle, targetEntries);
     fs.fsyncSync(handle);
   } finally {

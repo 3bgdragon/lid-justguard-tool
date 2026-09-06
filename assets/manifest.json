@@ -67,14 +67,22 @@
         "legacy": true
       },
       "on-off": {
-        "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
+        "sha1": "D678DEE9A11BFCB74990225C37C9BB6ACAF3DC82",
         "patch": "brggame-groggy-on.lidxor",
         "groggy": "on",
         "meleeGuard": "off",
         "elementalNoDamage": false
       },
+      "on-off-legacy": {
+        "sha1": "981D7513E12FD7BB5B4C3FB510A1D88DC2196967",
+        "patch": "brggame-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "legacy": true
+      },
       "off-on": {
-        "sha1": "BD6FB671DAA153D296E4D10DC52D3B0BDF22D1B6",
+        "sha1": "D7BA5D6153FF8A9A7BB1D88B398A05C252C4A5B2",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
@@ -83,6 +91,41 @@
         "pickaxeGuardEnabled": true,
         "battleAxeGuardEnabled": true,
         "extendedVfxEnabled": true
+      },
+      "on-on": {
+        "sha1": "BD6FB671DAA153D296E4D10DC52D3B0BDF22D1B6",
+        "patch": "brggame-melee-on-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true
+      },
+      "on-on-legacy": {
+        "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
+        "patch": "brggame-melee-on-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
+      },
+      "on-on-temp": {
+        "sha1": "7D5275C2F76E3B7A83B24D0E29E25DC4D6491451",
+        "patch": "brggame-melee-on-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
+      },
+      "on-on-steam-old": {
+        "sha1": "0A730843AE4B20F92227BF9710EBA600EB73B2A3",
+        "patch": "brggame-melee-on-groggy-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
       },
       "off-on-v1.4": {
         "sha1": "266C9712F6E9EB4FB30110D078BC0377B678B30B",
@@ -99,13 +142,6 @@
         "meleeGuard": "on",
         "elementalNoDamage": true,
         "legacy": true
-      },
-      "on-on": {
-        "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
-        "patch": "brggame-melee-on-groggy-on.lidxor",
-        "groggy": "on",
-        "meleeGuard": "on",
-        "elementalNoDamage": true
       },
       "off-on-v1.2": {
         "sha1": "1B82F2C30115F52EC8BBF118AC71F88BF1F31BEF",
