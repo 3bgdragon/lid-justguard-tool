@@ -47,7 +47,8 @@
     "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
     "size": [
       179212648,
-      179536462
+      179536462,
+      179858373
     ],
     "profiles": {
       "off-off": {
@@ -73,7 +74,7 @@
         "elementalNoDamage": false
       },
       "off-on": {
-        "sha1": "266C9712F6E9EB4FB30110D078BC0377B678B30B",
+        "sha1": "BD6FB671DAA153D296E4D10DC52D3B0BDF22D1B6",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
@@ -82,6 +83,22 @@
         "pickaxeGuardEnabled": true,
         "battleAxeGuardEnabled": true,
         "extendedVfxEnabled": true
+      },
+      "off-on-v1.4": {
+        "sha1": "266C9712F6E9EB4FB30110D078BC0377B678B30B",
+        "patch": "brggame-melee-on-groggy-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
+      },
+      "off-on-v1.4-alt": {
+        "sha1": "6CEB935BDFE9D783F29BF996EF24E99C40310337",
+        "patch": "brggame-melee-on-groggy-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "legacy": true
       },
       "on-on": {
         "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
