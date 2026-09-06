@@ -127,9 +127,9 @@ function identifyProfile(filePath, configuration) {
   const hash = sha1File(filePath);
   const profile = Object.entries(configuration.profiles)
     .find(([, value]) => value.sha1 === hash)?.[0];
-  const supportedSize = Array.isArray(configuration.size)
+  const supportedSize = Object.values(configuration.profiles).some((item) => item.sha1 === hash && item.size === size) || (Array.isArray(configuration.size)
     ? configuration.size.includes(size)
-    : size === configuration.size;
+    : size === configuration.size);
   return { profile, hash, size, supportedSize };
 }
 
@@ -303,12 +303,15 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
     }
   }
 
+  const targetSize = targetProfile.size || (baseFromBak ? fs.statSync(tempPath).size : (currentProfile.xorBaseSize || fs.statSync(tempPath).size));
   const handle = fs.openSync(tempPath, 'r+');
   try {
+    const workSize = Math.max(fs.fstatSync(handle).size, targetSize);
+    fs.ftruncateSync(handle, workSize);
     const currentEntries = baseFromBak ? [] : readPatch(path.join(ASSET_DIRECTORY, currentProfile.patch));
     const targetEntries = readPatch(path.join(ASSET_DIRECTORY, targetProfile.patch));
     for (const entry of [...currentEntries, ...targetEntries]) {
-      if (entry.offset + entry.payload.length > expectedSize) {
+      if (entry.offset + entry.payload.length > workSize) {
         fail('XOR 패치 범위가 대상 파일을 벗어납니다.');
       }
     }
@@ -318,12 +321,13 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
       xorEntries(handle, currentEntries);
     }
     xorEntries(handle, targetEntries);
+    fs.ftruncateSync(handle, targetSize);
     fs.fsyncSync(handle);
   } finally {
     fs.closeSync(handle);
   }
   const tempSize = fs.statSync(tempPath).size;
-  const isExpectedSize = Array.isArray(expectedSize) ? expectedSize.includes(tempSize) : tempSize === expectedSize;
+  const isExpectedSize = tempSize === targetSize;
   if (!isExpectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
   const actualHash = sha1File(tempPath);
   if (actualHash !== targetProfile.sha1) {

@@ -82,7 +82,7 @@
         "legacy": true
       },
       "off-on": {
-        "sha1": "D7BA5D6153FF8A9A7BB1D88B398A05C252C4A5B2",
+        "sha1": "79EE487EDE828C921871D0223DEC4B00CE9C1738",
         "patch": "brggame-melee-on-groggy-off.lidxor",
         "groggy": "off",
         "meleeGuard": "on",
@@ -90,10 +90,13 @@
         "aiJustGuardDisabled": true,
         "pickaxeGuardEnabled": true,
         "battleAxeGuardEnabled": true,
-        "extendedVfxEnabled": true
+        "extendedVfxEnabled": true,
+        "size": 179855875,
+        "xorBaseSize": 179536462,
+        "guardStateBranchFixed": true
       },
       "on-on": {
-        "sha1": "BD6FB671DAA153D296E4D10DC52D3B0BDF22D1B6",
+        "sha1": "5644843E8E5B9072C4B3838CA28A35BAD6B3C56C",
         "patch": "brggame-melee-on-groggy-on.lidxor",
         "groggy": "on",
         "meleeGuard": "on",
@@ -101,7 +104,10 @@
         "aiJustGuardDisabled": true,
         "pickaxeGuardEnabled": true,
         "battleAxeGuardEnabled": true,
-        "extendedVfxEnabled": true
+        "extendedVfxEnabled": true,
+        "size": 179855874,
+        "xorBaseSize": 179536462,
+        "guardStateBranchFixed": true
       },
       "on-on-legacy": {
         "sha1": "83EC668A342BFA8CBF9F35430A537A2D4CBE9B12",
@@ -186,6 +192,30 @@
         "pickaxeGuardEnabled": true,
         "extendedVfxEnabled": true,
         "playerJustGuardDirectReturnTrue": true
+      },
+      "off-on-v1.4.1": {
+        "sha1": "D7BA5D6153FF8A9A7BB1D88B398A05C252C4A5B2",
+        "patch": "brggame-melee-on-groggy-off-v1.4.1.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "legacy": true
+      },
+      "on-on-v1.4.1": {
+        "sha1": "BD6FB671DAA153D296E4D10DC52D3B0BDF22D1B6",
+        "patch": "brggame-melee-on-groggy-on-v1.4.1.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "legacy": true
       }
     }
   },
