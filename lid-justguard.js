@@ -10,7 +10,7 @@ const readline = require('readline/promises');
 const PATCH_MAGIC = Buffer.from('LIDXOR1\0', 'ascii');
 const ASSET_DIRECTORY = path.join(__dirname, 'assets');
 const MANIFEST_PATH = path.join(ASSET_DIRECTORY, 'manifest.json');
-const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+let manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 
 const STRENGTH_ORDER = ['stock', 'soft', 'wide', 'iron'];
 const GROGGY_ORDER = ['off', 'on'];
@@ -185,6 +185,7 @@ function inspectExecutable(executablePath, commonHash, groggyHash) {
 }
 
 function readStatus(gameDirectory) {
+  selectBuild(gameDirectory);
   const paths = expectedPaths(gameDirectory);
   const common = identifyProfile(paths.common, manifest.common);
   const groggy = identifyProfile(paths.groggy, manifest.groggy);
@@ -193,6 +194,20 @@ function readStatus(gameDirectory) {
     executable = inspectExecutable(paths.executable, common.hash, groggy.hash);
   }
   return { gameDirectory, paths, common, groggy, executable };
+}
+
+function selectBuild(gameDirectory) {
+  const candidatePath = path.join(ASSET_DIRECTORY, 'manifest-25136512.json');
+  if (!fs.existsSync(candidatePath)) return;
+  const candidate = JSON.parse(fs.readFileSync(candidatePath, 'utf8'));
+  const file = path.join(gameDirectory, candidate.common.relativePath);
+  if (!fs.existsSync(file)) return;
+  const digest = sha1File(file);
+  if (Object.values(candidate.common.profiles).some((p) => p.sha1 === digest)) {
+    manifest = candidate;
+    STOCK_HASHES['brggame.upk'] = candidate.groggy.profiles['off-off'].sha1;
+    STOCK_HASHES['as_ch_main_male_common_sf.upk'] = candidate.common.profiles.stock.sha1;
+  }
 }
 
 function executableIsValid(status) {
@@ -212,6 +227,7 @@ function assertSupported(status) {
 }
 
 function printStatus(status) {
+  if (manifest.steamBuildId) console.log('새 빌드 대응 시험판: 파일 적용·복원 검증 완료 / 실게임 전투 검증 전');
   console.log(`\nLET IT DIE ${manifest.gameVersion}`);
   console.log(`설치 폴더: ${status.gameDirectory}`);
   if (status.common.profile) {
@@ -363,6 +379,7 @@ function createBackup(status, reason) {
   fs.mkdirSync(directory, { recursive: true });
   const metadata = {
     format: 1,
+    steamBuildId: manifest.steamBuildId || null,
     createdAt: new Date().toISOString(),
     reason,
     gameDirectory: status.gameDirectory,
@@ -460,15 +477,19 @@ function transactionalReplace(replacements) {
 }
 
 function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) {
+  selectBuild(gameDirectory);
   if (!manifest.common.profiles[strengthName]) fail(`알 수 없는 강도입니다: ${strengthName}`);
   if (!GROGGY_ORDER.includes(groggyName)) fail(`알 수 없는 그로기 설정입니다: ${groggyName}`);
   if (!MELEE_GUARD_ORDER.includes(meleeGuardName)) fail(`알 수 없는 근접무기 방어 설정입니다: ${meleeGuardName}`);
-  const targetRuntimeName = findRuntimeProfile(groggyName, meleeGuardName);
+  let targetRuntimeName = findRuntimeProfile(groggyName, meleeGuardName);
   if (!targetRuntimeName) fail(`지원하지 않는 조합입니다: 그로기 ${groggyName}, 근접 방어 ${meleeGuardName}`);
   if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
 
   const status = readStatus(gameDirectory);
   assertSupported(status);
+  if (manifest.groggy.profiles[status.groggy.profile].warpCentered && manifest.groggy.profiles[targetRuntimeName + '-centered']) {
+    targetRuntimeName += '-centered';
+  }
   if (status.common.profile === strengthName && status.groggy.profile === targetRuntimeName) {
     return { changed: false, status };
   }
@@ -516,6 +537,7 @@ function restoreBackup(gameDirectory, backupPath) {
   if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
   const metadata = readAndValidateBackup(backupPath);
   const current = readStatus(gameDirectory);
+  if ((metadata.steamBuildId || null) !== (manifest.steamBuildId || null)) fail('게임 업데이트 전후의 백업은 서로 복원할 수 없습니다. 현재 빌드에서 만든 백업을 선택하세요.');
   const safetyBackup = createBackup(current, `before-restore:${path.basename(backupPath)}`);
   const temps = {};
   try {

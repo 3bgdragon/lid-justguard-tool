@@ -1,6 +1,6 @@
 {
   "name": "lid-justguard-tool",
-  "version": "1.4.2",
+  "version": "1.5.0-dev",
   "description": "LET IT DIE 5.0.1.0 offline Just Guard timing, melee elemental protection and Groggy patch/restore tool",
   "license": "MIT",
   "private": false,
