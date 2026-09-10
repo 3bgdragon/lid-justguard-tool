@@ -6,6 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 const childProcess = require('child_process');
 const readline = require('readline/promises');
+const m2gCompat = require('./compat/m2g');
 
 const PATCH_MAGIC = Buffer.from('LIDXOR1\0', 'ascii');
 const ASSET_DIRECTORY = path.join(__dirname, 'assets');
@@ -130,6 +131,11 @@ function identifyProfile(filePath, configuration) {
   const supportedSize = Object.values(configuration.profiles).some((item) => item.sha1 === hash && item.size === size) || (Array.isArray(configuration.size)
     ? configuration.size.includes(size)
     : size === configuration.size);
+  if (!profile && configuration === manifest.groggy && manifest.steamBuildId === '25136512') {
+    const knife = m2gCompat.identify(hash);
+    const baseName = knife && Object.entries(configuration.profiles).find(([, p]) => p.sha1 === knife.baseSha1)?.[0];
+    if (baseName) return { profile: baseName, hash, size, supportedSize: true, m2g: true, legacyM2g: !!knife.legacy };
+  }
   return { profile, hash, size, supportedSize };
 }
 
@@ -189,10 +195,8 @@ function readStatus(gameDirectory) {
   const paths = expectedPaths(gameDirectory);
   const common = identifyProfile(paths.common, manifest.common);
   const groggy = identifyProfile(paths.groggy, manifest.groggy);
-  let executable;
-  if (common.profile && groggy.profile) {
-    executable = inspectExecutable(paths.executable, common.hash, groggy.hash);
-  }
+  // Digest linkage is independent of whether the package has a known profile.
+  const executable = inspectExecutable(paths.executable, common.hash, groggy.hash);
   return { gameDirectory, paths, common, groggy, executable };
 }
 
@@ -240,6 +244,8 @@ function printStatus(status) {
   }
   if (status.groggy.profile) {
     const runtime = manifest.groggy.profiles[status.groggy.profile];
+    if (status.groggy.m2g) console.log(`M2G 나이프: 적용됨${status.groggy.legacyM2g ? ' (구버전 적용본)' : ''} · 가드 설정 변경 시 유지`);
+    if (runtime.warpCentered) console.log('워프 시작층 메뉴: 유지');
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
     console.log(`근접 속성 후속 피해: ${runtime.elementalNoDamage ? '저스트가드 시 차단' : '순정'}`);
@@ -368,6 +374,30 @@ function makeExecutableTemp(sourcePath, commonHash, groggyHash, tempPath) {
   if (!Object.values(check).every((entry) => entry.valid)) {
     fail('임시 실행 파일의 패키지 해시 검증에 실패했습니다.');
   }
+}
+
+function makeM2gPatchedTemp(sourcePath, currentProfile, targetProfile, tempPath) {
+  if (fs.existsSync(tempPath)) fail(`이전 임시 파일이 남아 있습니다: ${tempPath}`);
+  const base = m2gCompat.strip(fs.readFileSync(sourcePath));
+  const targetSize = targetProfile.size;
+  const buffer = Buffer.alloc(Math.max(base.length, targetSize));
+  base.copy(buffer);
+  // Both deltas are relative to the same stock package. Do not consult .bak:
+  // its warp/guard state may differ from the currently recognized input.
+  for (const profile of [currentProfile, targetProfile]) {
+    for (const { offset, payload } of readPatch(path.join(ASSET_DIRECTORY, profile.patch))) {
+      if (offset + payload.length > buffer.length) fail('M2G 보존 XOR 범위 오류');
+      for (let i = 0; i < payload.length; i++) buffer[offset + i] ^= payload[i];
+    }
+  }
+  const target = buffer.subarray(0, targetSize);
+  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase() !== targetProfile.sha1) fail('M2G 보존 가드 패치 검증 실패');
+  const expected = m2gCompat.forBase(targetProfile.sha1);
+  if (!expected) fail('지원하지 않는 M2G/가드 조합입니다.');
+  const output = m2gCompat.rebuild(target);
+  fs.writeFileSync(tempPath, output, { flag: 'wx' });
+  if (sha1File(tempPath) !== expected.sha1) fail('M2G 보존 임시 파일 검증 실패');
+  return expected.sha1;
 }
 
 function backupRoot() {
@@ -511,14 +541,13 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
       manifest.common.size,
       temps.common,
     );
-    makePatchedTemp(
-      status.paths.groggy,
-      manifest.groggy.profiles[status.groggy.profile],
-      groggyProfile,
-      manifest.groggy.size,
-      temps.groggy,
-    );
-    makeExecutableTemp(status.paths.executable, commonProfile.sha1, groggyProfile.sha1, temps.executable);
+    let targetGroggyHash = groggyProfile.sha1;
+    if (status.groggy.m2g) {
+      targetGroggyHash = makeM2gPatchedTemp(status.paths.groggy, manifest.groggy.profiles[status.groggy.profile], groggyProfile, temps.groggy);
+    } else {
+      makePatchedTemp(status.paths.groggy, manifest.groggy.profiles[status.groggy.profile], groggyProfile, manifest.groggy.size, temps.groggy);
+    }
+    makeExecutableTemp(status.paths.executable, commonProfile.sha1, targetGroggyHash, temps.executable);
     transactionalReplace(FILE_KEYS.map((key) => ({ target: status.paths[key], temp: temps[key] })));
   } catch (error) {
     cleanupFiles(Object.values(temps));
@@ -527,7 +556,7 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
   }
 
   const verified = readStatus(gameDirectory);
-  if (verified.common.profile !== strengthName || verified.groggy.profile !== targetRuntimeName || !executableIsValid(verified)) {
+  if (verified.common.profile !== strengthName || verified.groggy.profile !== targetRuntimeName || !!verified.groggy.m2g !== !!status.groggy.m2g || !executableIsValid(verified)) {
     fail(`적용 후 검증에 실패했습니다. 변경 전 백업: ${backupPath}`);
   }
   return { changed: true, backupPath, status: verified };
