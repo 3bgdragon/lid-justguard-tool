@@ -1,0 +1,179 @@
+{
+  "format": 2,
+  "gameVersion": "Steam build 25244463",
+  "common": {
+    "relativePath": "BrgGame/CookedPCConsole/AS_CH_Main_Male_Common_SF.upk",
+    "size": 24315249,
+    "profiles": {
+      "stock": {
+        "sha1": "5124C1448EA936B06D041AF4CDFC8FD2EA69888D",
+        "patch": "25244463-common-stock.lidxor",
+        "label": "순정",
+        "guardReady": 0.06333337724208832,
+        "start": 0.10266699641942978,
+        "duration": 0.10400000214576721,
+        "probabilityUnlocked": false,
+        "size": 24315249,
+        "xorBaseSize": 24315249
+      },
+      "soft": {
+        "sha1": "AEDE6FF32E31F62384CBAEB77A4D035D6981760A",
+        "patch": "25244463-common-soft-050.lidxor",
+        "label": "완화",
+        "guardReady": 0.04,
+        "start": 0.06,
+        "duration": 0.5,
+        "probabilityUnlocked": true,
+        "size": 25585638,
+        "xorBaseSize": 24315249
+      },
+      "wide": {
+        "sha1": "2F115C20809BD46E8BDEA359921F4792A4E43C21",
+        "patch": "25244463-common-wide.lidxor",
+        "label": "넓게",
+        "guardReady": 0.025,
+        "start": 0.035,
+        "duration": 1,
+        "probabilityUnlocked": true,
+        "size": 25385286,
+        "xorBaseSize": 24315249
+      },
+      "iron": {
+        "sha1": "2B23B1B548763636D6715C94F02CFFB1D0F572EE",
+        "patch": "25244463-common-iron.lidxor",
+        "label": "다리미급",
+        "guardReady": 0.015,
+        "start": 0.02,
+        "duration": 1.2,
+        "probabilityUnlocked": true,
+        "size": 25385296,
+        "xorBaseSize": 24315249
+      },
+      "soft-085-legacy": {
+        "sha1": "5A9D9451E8C6C15ED3736DFDA6298C2A3305F488",
+        "patch": "25244463-common-soft.lidxor",
+        "label": "완화 (이전 0.85초)",
+        "guardReady": 0.04,
+        "start": 0.06,
+        "duration": 0.85,
+        "probabilityUnlocked": true,
+        "size": 25385294,
+        "xorBaseSize": 24315249,
+        "legacy": true
+      }
+    }
+  },
+  "groggy": {
+    "relativePath": "BrgGame/CookedPCConsole/BrgGame.upk",
+    "size": [
+      182365939
+    ],
+    "profiles": {
+      "off-off": {
+        "sha1": "3877130C584B2CBABB89A22DF1E7A0E437496B37",
+        "patch": "25244463-brggame-off-off.lidxor",
+        "groggy": "off",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 182365939,
+        "xorBaseSize": 182365939
+      },
+      "off-off-centered": {
+        "sha1": "F83CA59BDFA8232C7DAA0557536C4D5F6D49C909",
+        "patch": "25244463-brggame-off-off-centered.lidxor",
+        "groggy": "off",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 182921848,
+        "xorBaseSize": 182365939,
+        "warpCentered": true
+      },
+      "off-on": {
+        "sha1": "FA188B449C8A02621966BCDCB9F7A1C7C06E4C4D",
+        "patch": "25244463-brggame-off-on.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 183309360,
+        "xorBaseSize": 182365939,
+        "guardStateBranchFixed": true
+      },
+      "off-on-centered": {
+        "sha1": "62B6D0345D573847C35CA00A4989B314BAFC7B84",
+        "patch": "25244463-brggame-off-on-centered.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 183865269,
+        "xorBaseSize": 182365939,
+        "guardStateBranchFixed": true,
+        "warpCentered": true
+      },
+      "on-off": {
+        "sha1": "233397B3D8ACDDB3D9148BFA34F8E8C88CB74131",
+        "patch": "25244463-brggame-on-off.lidxor",
+        "groggy": "on",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 182687822,
+        "xorBaseSize": 182365939
+      },
+      "on-off-centered": {
+        "sha1": "EB90D9BB051AC9C94BCB5C8766B22DD387552FC5",
+        "patch": "25244463-brggame-on-off-centered.lidxor",
+        "groggy": "on",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 183243731,
+        "xorBaseSize": 182365939,
+        "warpCentered": true
+      },
+      "on-on": {
+        "sha1": "C3441DA870AA717FBF35AAF87EE45CA60270C295",
+        "patch": "25244463-brggame-on-on.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 183309359,
+        "xorBaseSize": 182365939,
+        "guardStateBranchFixed": true
+      },
+      "on-on-centered": {
+        "sha1": "36BB297EAE8F674FB973910814AB15AA2E09AEC3",
+        "patch": "25244463-brggame-on-on-centered.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 183865268,
+        "xorBaseSize": 182365939,
+        "guardStateBranchFixed": true,
+        "warpCentered": true
+      }
+    }
+  },
+  "executable": {
+    "relativePath": "Binaries/Win64/BrgGame-Steam.exe",
+    "manifestEntries": {
+      "as_ch_main_male_common_sf.upk": 1,
+      "brggame.upk": 2
+    }
+  },
+  "patchEncoding": "xor-from-stock-v1",
+  "steamBuildId": "25244463"
+}
