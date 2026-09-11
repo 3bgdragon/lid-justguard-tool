@@ -7,6 +7,8 @@ const crypto = require('crypto');
 const childProcess = require('child_process');
 const readline = require('readline/promises');
 const m2gCompat = require('./compat/m2g');
+const embedded = require('./compat/m2g/embedded');
+const restoreSafety = require('./restore-safety');
 
 const PATCH_MAGIC = Buffer.from('LIDXOR1\0', 'ascii');
 const ASSET_DIRECTORY = path.join(__dirname, 'assets');
@@ -126,6 +128,13 @@ function isGameRunning() {
 function identifyProfile(filePath, configuration) {
   const size = fs.statSync(filePath).size;
   const hash = sha1File(filePath);
+  if (configuration === manifest.groggy && manifest.steamBuildId === '25244463') {
+    const found = embedded.identify(fs.readFileSync(filePath));
+    if (found) {
+      const name = Object.entries(configuration.profiles).find(([,p]) => p.sha1 === found.profile.sha1)?.[0];
+      if (name) return {profile:name,hash,size,supportedSize:true,embeddedM2g:true,m2g:found.enabled};
+    }
+  }
   const profile = Object.entries(configuration.profiles)
     .find(([, value]) => value.sha1 === hash)?.[0];
   const supportedSize = Object.values(configuration.profiles).some((item) => item.sha1 === hash && item.size === size) || (Array.isArray(configuration.size)
@@ -251,6 +260,7 @@ function printStatus(status) {
   if (status.groggy.profile) {
     const runtime = manifest.groggy.profiles[status.groggy.profile];
     if (status.groggy.m2g) console.log(`M2G 나이프: 적용됨${status.groggy.legacyM2g ? ' (구버전 적용본)' : ''} · 가드 설정 변경 시 유지`);
+    else if (status.groggy.embeddedM2g) console.log('M2G 나이프: 미적용 · 가드 설정 변경 시 유지');
     if (runtime.warpCentered) console.log('워프 시작층 메뉴: 유지');
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
@@ -406,6 +416,24 @@ function makeM2gPatchedTemp(sourcePath, currentProfile, targetProfile, tempPath)
   return expected.sha1;
 }
 
+function makeEmbeddedTemp(sourcePath, currentProfile, targetProfile, tempPath, enabled) {
+  if (fs.existsSync(tempPath)) fail('이전 임시 파일이 남아 있습니다.');
+  const source = embedded.set(fs.readFileSync(sourcePath), true);
+  const buffer = Buffer.alloc(Math.max(source.length, targetProfile.size));
+  source.copy(buffer);
+  for (const profile of [currentProfile,targetProfile]) {
+    for (const {offset,payload} of readPatch(path.join(ASSET_DIRECTORY,profile.patch))) {
+      if (offset + payload.length > buffer.length) fail('패치 범위 오류');
+      for (let i=0;i<payload.length;i++) buffer[offset+i]^=payload[i];
+    }
+  }
+  const target=buffer.subarray(0,targetProfile.size);
+  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase()!==targetProfile.sha1) fail('가드 변환 검증 실패');
+  const result=embedded.set(target,enabled);
+  fs.writeFileSync(tempPath,result,{flag:'wx'});
+  return sha1File(tempPath);
+}
+
 function backupRoot() {
   return path.join(__dirname, 'backups');
 }
@@ -419,6 +447,7 @@ function createBackup(status, reason) {
     createdAt: new Date().toISOString(),
     reason,
     gameDirectory: status.gameDirectory,
+    beforeSnapshot: restoreSafety.capture(status.gameDirectory),
     files: {},
   };
   try {
@@ -548,7 +577,9 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
       temps.common,
     );
     let targetGroggyHash = groggyProfile.sha1;
-    if (status.groggy.m2g) {
+    if (status.groggy.embeddedM2g) {
+      targetGroggyHash = makeEmbeddedTemp(status.paths.groggy, manifest.groggy.profiles[status.groggy.profile], groggyProfile, temps.groggy, status.groggy.m2g);
+    } else if (status.groggy.m2g) {
       targetGroggyHash = makeM2gPatchedTemp(status.paths.groggy, manifest.groggy.profiles[status.groggy.profile], groggyProfile, temps.groggy);
     } else {
       makePatchedTemp(status.paths.groggy, manifest.groggy.profiles[status.groggy.profile], groggyProfile, manifest.groggy.size, temps.groggy);
@@ -562,6 +593,7 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
   }
 
   const verified = readStatus(gameDirectory);
+  restoreSafety.mark(backupPath, gameDirectory);
   if (verified.common.profile !== strengthName || verified.groggy.profile !== targetRuntimeName || !!verified.groggy.m2g !== !!status.groggy.m2g || !executableIsValid(verified)) {
     fail(`적용 후 검증에 실패했습니다. 변경 전 백업: ${backupPath}`);
   }
@@ -573,6 +605,7 @@ function restoreBackup(gameDirectory, backupPath) {
   const metadata = readAndValidateBackup(backupPath);
   const current = readStatus(gameDirectory);
   if ((metadata.steamBuildId || null) !== (manifest.steamBuildId || null)) fail('게임 업데이트 전후의 백업은 서로 복원할 수 없습니다. 현재 빌드에서 만든 백업을 선택하세요.');
+  restoreSafety.assertSafe(metadata, gameDirectory);
   const safetyBackup = createBackup(current, `before-restore:${path.basename(backupPath)}`);
   const temps = {};
   try {
@@ -594,6 +627,7 @@ function restoreBackup(gameDirectory, backupPath) {
       fail(`복원 후 ${key} 파일 검증에 실패했습니다. 안전 백업: ${safetyBackup}`);
     }
   }
+  restoreSafety.mark(safetyBackup, gameDirectory);
   return { backupPath, safetyBackup, status: readStatus(gameDirectory) };
 }
 
