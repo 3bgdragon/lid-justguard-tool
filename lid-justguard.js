@@ -213,7 +213,7 @@ function selectBuild(gameDirectory) {
   manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
   STOCK_HASHES['brggame.upk'] = 'C4D8C0EFBCBDB0CDE3E3CF1F5DA07EFB1996C207';
   STOCK_HASHES['as_ch_main_male_common_sf.upk'] = '757EC07E9846C817FB16780BB5C5ADCAB8A75588';
-  for (const build of ['25244463', '25136512']) {
+  for (const build of ['25386710', '25244463', '25136512']) {
     const candidatePath = path.join(ASSET_DIRECTORY, `manifest-${build}.json`);
     if (!fs.existsSync(candidatePath)) continue;
     const candidate = JSON.parse(fs.readFileSync(candidatePath, 'utf8'));
