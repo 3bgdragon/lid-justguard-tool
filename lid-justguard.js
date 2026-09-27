@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const { configure, text: t } = require('./language');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -92,7 +93,7 @@ function isGameDirectory(gameDirectory) {
 function discoverGameDirectory(explicitPath) {
   if (explicitPath) {
     const resolved = path.resolve(explicitPath);
-    if (!isGameDirectory(resolved)) fail(`LET IT DIE 설치 파일을 찾지 못했습니다: ${resolved}`);
+    if (!isGameDirectory(resolved)) fail(t(`LET IT DIE 설치 파일을 찾지 못했습니다: ${resolved}`, `LET IT DIE installation files not found: ${resolved}`));
     return resolved;
   }
 
@@ -103,10 +104,10 @@ function discoverGameDirectory(explicitPath) {
   }
   const unique = [...new Set(matches.map((item) => path.resolve(item)))];
   if (unique.length === 0) {
-    fail('LET IT DIE 설치 폴더를 자동으로 찾지 못했습니다. --game "설치 경로"를 사용하세요.');
+    fail(t('LET IT DIE 설치 폴더를 자동으로 찾지 못했습니다. --game "설치 경로"를 사용하세요.', 'LET IT DIE installation not found automatically. Use --game "installation path".'));
   }
   if (unique.length > 1) {
-    fail(`LET IT DIE 설치 폴더가 여러 개입니다. --game으로 지정하세요:\n${unique.join('\n')}`);
+    fail(t(`LET IT DIE 설치 폴더가 여러 개입니다. --game으로 지정하세요:\n${unique.join('\n')}`, `Multiple LET IT DIE installations found. Specify --game:\n${unique.join('\n')}`));
   }
   return unique[0];
 }
@@ -154,13 +155,13 @@ function findRuntimeProfile(groggyName, meleeGuardName) {
 }
 
 function groggyLabel(name) {
-  return name === 'on' ? 'ON (직접 공격자 Groggy)' : 'OFF (순정 Flip)';
+  return name === 'on' ? t('ON (직접 공격자 Groggy)', 'ON (Groggy for direct attacker)') : t('OFF (순정 Flip)', 'OFF (stock Flip)');
 }
 
 function meleeGuardLabel(name) {
   return name === 'on'
-    ? 'ON (근접무기 저스트가드 불가 제한 해제)'
-    : 'OFF (순정 제한)';
+    ? t('ON (근접무기 저스트가드 불가 제한 해제)', 'ON (melee Just Guard restrictions removed)')
+    : t('OFF (순정 제한)', 'OFF (stock restrictions)');
 }
 
 function findAll(buffer, needle) {
@@ -179,7 +180,7 @@ function manifestDigestPositions(executable, assetName, expectedCount) {
   const needle = Buffer.from(`${assetName.toLowerCase()}\0`, 'ascii');
   const positions = findAll(executable, needle);
   if (positions.length !== expectedCount) {
-    fail(`${assetName} 실행 파일 해시 항목이 ${expectedCount}개가 아닙니다: ${positions.length}개`);
+    fail(t(`${assetName} 실행 파일 해시 항목이 ${expectedCount}개가 아닙니다: ${positions.length}개`, `${assetName} executable hash entry count: expected ${expectedCount}, found ${positions.length}`));
   }
   return positions.map((position) => position + needle.length);
 }
@@ -235,17 +236,51 @@ function executableIsValid(status) {
 
 function assertSupported(status) {
   if (!status.common.supportedSize || !status.common.profile) {
-    fail(`지원하지 않는 캐릭터 패키지입니다. SHA-1: ${status.common.hash}`);
+    fail(t(`지원하지 않는 캐릭터 패키지입니다. SHA-1: ${status.common.hash}`, `Unsupported character package. SHA-1: ${status.common.hash}`));
   }
   if (!status.groggy.supportedSize || !status.groggy.profile) {
-    fail(`지원하지 않는 BrgGame 패키지입니다. SHA-1: ${status.groggy.hash}`);
+    fail(t(`지원하지 않는 BrgGame 패키지입니다. SHA-1: ${status.groggy.hash}`, `Unsupported BrgGame package. SHA-1: ${status.groggy.hash}`));
   }
   if (!executableIsValid(status)) {
-    fail('실행 파일의 패키지 해시가 현재 UPK와 일치하지 않습니다. Steam 검증 또는 백업 복원이 필요합니다.');
+    fail(t('실행 파일의 패키지 해시가 현재 UPK와 일치하지 않습니다. Steam 검증 또는 백업 복원이 필요합니다.', 'Executable package hashes do not match the current UPK. Steam file verification or backup restoration is required.'));
   }
 }
 
+function strengthDisplay(name) {
+  return t(manifest.common.profiles[name]?.label || name, { stock: 'Stock', soft: 'Relaxed', wide: 'Wide', iron: 'Iron-like' }[name] || name);
+}
+
 function printStatus(status) {
+  if (t(false, true)) {
+    if (manifest.steamBuildId) console.log('New-build trial: file apply/restore verified; in-game combat verification pending');
+    console.log(`\nLET IT DIE ${manifest.gameVersion}`);
+    console.log(`Installation: ${status.gameDirectory}`);
+    if (status.common.profile) {
+      const profile = manifest.common.profiles[status.common.profile];
+      console.log(`Just Guard strength: ${strengthDisplay(status.common.profile)}`);
+      console.log(`  Guard ready ${Math.round(profile.guardReady * 1000)}ms / start ${Math.round(profile.start * 1000)}ms / duration ${profile.duration.toFixed(3)}s`);
+      console.log(`  High-tier weapon probability restriction: ${profile.probabilityUnlocked ? 'Removed' : 'Stock'}`);
+    } else console.log(`Just Guard strength: Unknown (${status.common.hash})`);
+    if (status.groggy.profile) {
+      const runtime = manifest.groggy.profiles[status.groggy.profile];
+      if (status.groggy.m2g) console.log(`M2G knife: Applied${status.groggy.legacyM2g ? ' (legacy)' : ''}; preserved when guard settings change`);
+      else if (status.groggy.embeddedM2g) console.log('M2G knife: Not applied; preserved when guard settings change');
+      if (runtime.warpCentered) console.log('Warp start-floor menu: preserved');
+      console.log(`Just Guard groggy: ${groggyLabel(runtime.groggy)}`);
+      console.log(`Melee guard restrictions: ${meleeGuardLabel(runtime.meleeGuard)}`);
+      console.log(`Melee elemental follow-up damage: ${runtime.elementalNoDamage ? 'Blocked on Just Guard' : 'Stock'}`);
+      if (runtime.aiJustGuardDisabled) console.log('Enemy AI Just Guard: disabled (player only)');
+      if (runtime.pickaxeGuardEnabled) console.log('Pickaxe attacks: Just Guard allowed');
+      if (runtime.battleAxeGuardEnabled) console.log('Battle axe attacks: Just Guard allowed');
+      if (runtime.extendedVfxEnabled) console.log('Extended-window visual effect: enabled (prevents early disappearance at 0.242s)');
+    } else {
+      console.log(`Just Guard groggy: Unknown (${status.groggy.hash})`);
+      console.log('Melee guard restrictions: Unknown');
+      console.log('Melee elemental follow-up damage: Unknown');
+    }
+    console.log(`Executable hash links: ${executableIsValid(status) ? 'Valid' : 'Mismatch/unknown'}`);
+    return;
+  }
   if (manifest.steamBuildId) console.log('새 빌드 대응 시험판: 파일 적용·복원 검증 완료 / 실게임 전투 검증 전');
   console.log(`\nLET IT DIE ${manifest.gameVersion}`);
   console.log(`설치 폴더: ${status.gameDirectory}`);
@@ -288,21 +323,21 @@ function printStatus(status) {
 function readPatch(patchPath) {
   const data = fs.readFileSync(patchPath);
   if (data.length < 12 || !data.subarray(0, 8).equals(PATCH_MAGIC)) {
-    fail(`패치 파일 형식이 올바르지 않습니다: ${patchPath}`);
+    fail(t(`패치 파일 형식이 올바르지 않습니다: ${patchPath}`, `Invalid patch file format: ${patchPath}`));
   }
   const count = data.readUInt32LE(8);
   const entries = [];
   let cursor = 12;
   for (let index = 0; index < count; index += 1) {
-    if (cursor + 8 > data.length) fail(`패치 항목 헤더가 잘렸습니다: ${patchPath}`);
+    if (cursor + 8 > data.length) fail(t(`패치 항목 헤더가 잘렸습니다: ${patchPath}`, `Truncated patch entry header: ${patchPath}`));
     const offset = data.readUInt32LE(cursor);
     const size = data.readUInt32LE(cursor + 4);
     cursor += 8;
-    if (cursor + size > data.length) fail(`패치 항목 데이터가 잘렸습니다: ${patchPath}`);
+    if (cursor + size > data.length) fail(t(`패치 항목 데이터가 잘렸습니다: ${patchPath}`, `Truncated patch entry data: ${patchPath}`));
     entries.push({ offset, payload: data.subarray(cursor, cursor + size) });
     cursor += size;
   }
-  if (cursor !== data.length) fail(`패치 파일에 알 수 없는 꼬리 데이터가 있습니다: ${patchPath}`);
+  if (cursor !== data.length) fail(t(`패치 파일에 알 수 없는 꼬리 데이터가 있습니다: ${patchPath}`, `Unknown trailing data in patch file: ${patchPath}`));
   return entries;
 }
 
@@ -310,7 +345,7 @@ function xorEntries(handle, entries) {
   for (const entry of entries) {
     const current = Buffer.allocUnsafe(entry.payload.length);
     const bytesRead = fs.readSync(handle, current, 0, current.length, entry.offset);
-    if (bytesRead !== current.length) fail('XOR 패치 대상 데이터를 모두 읽지 못했습니다.');
+    if (bytesRead !== current.length) fail(t('XOR 패치 대상 데이터를 모두 읽지 못했습니다.', 'Could not read all XOR patch target data.'));
     for (let index = 0; index < current.length; index += 1) {
       current[index] ^= entry.payload[index];
     }
@@ -319,7 +354,7 @@ function xorEntries(handle, entries) {
 }
 
 function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize, tempPath) {
-  if (fs.existsSync(tempPath)) fail(`이전 작업의 임시 파일이 남아 있습니다: ${tempPath}`);
+  if (fs.existsSync(tempPath)) fail(t(`이전 작업의 임시 파일이 남아 있습니다: ${tempPath}`, `A temporary file from a previous operation remains: ${tempPath}`));
 
   const fileName = path.basename(sourcePath).toLowerCase();
   const stockHash = STOCK_HASHES[fileName];
@@ -350,7 +385,7 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
     const targetEntries = readPatch(path.join(ASSET_DIRECTORY, targetProfile.patch));
     for (const entry of [...currentEntries, ...targetEntries]) {
       if (entry.offset + entry.payload.length > workSize) {
-        fail('XOR 패치 범위가 대상 파일을 벗어납니다.');
+        fail(t('XOR 패치 범위가 대상 파일을 벗어납니다.', 'XOR patch exceeds target file bounds.'));
       }
     }
     // A profile delta is defined relative to stock. Applying the current
@@ -366,15 +401,15 @@ function makePatchedTemp(sourcePath, currentProfile, targetProfile, expectedSize
   }
   const tempSize = fs.statSync(tempPath).size;
   const isExpectedSize = tempSize === targetSize;
-  if (!isExpectedSize) fail('임시 UPK 파일 크기 검증에 실패했습니다.');
+  if (!isExpectedSize) fail(t('임시 UPK 파일 크기 검증에 실패했습니다.', 'Temporary UPK file size verification failed.'));
   const actualHash = sha1File(tempPath);
   if (actualHash !== targetProfile.sha1) {
-    fail(`임시 UPK SHA-1 검증에 실패했습니다: ${actualHash} (예상 ${targetProfile.sha1})`);
+    fail(t(`임시 UPK SHA-1 검증에 실패했습니다: ${actualHash} (예상 ${targetProfile.sha1})`, `Temporary UPK SHA-1 verification failed: ${actualHash} (expected ${targetProfile.sha1})`));
   }
 }
 
 function makeExecutableTemp(sourcePath, commonHash, groggyHash, tempPath) {
-  if (fs.existsSync(tempPath)) fail(`이전 작업의 임시 파일이 남아 있습니다: ${tempPath}`);
+  if (fs.existsSync(tempPath)) fail(t(`이전 작업의 임시 파일이 남아 있습니다: ${tempPath}`, `A temporary file from a previous operation remains: ${tempPath}`));
   const executable = fs.readFileSync(sourcePath);
   const replacements = {
     'as_ch_main_male_common_sf.upk': commonHash,
@@ -388,12 +423,12 @@ function makeExecutableTemp(sourcePath, commonHash, groggyHash, tempPath) {
   fs.writeFileSync(tempPath, executable, { flag: 'wx' });
   const check = inspectExecutable(tempPath, commonHash, groggyHash);
   if (!Object.values(check).every((entry) => entry.valid)) {
-    fail('임시 실행 파일의 패키지 해시 검증에 실패했습니다.');
+    fail(t('임시 실행 파일의 패키지 해시 검증에 실패했습니다.', 'Temporary executable package hash verification failed.'));
   }
 }
 
 function makeM2gPatchedTemp(sourcePath, currentProfile, targetProfile, tempPath) {
-  if (fs.existsSync(tempPath)) fail(`이전 임시 파일이 남아 있습니다: ${tempPath}`);
+  if (fs.existsSync(tempPath)) fail(t(`이전 임시 파일이 남아 있습니다: ${tempPath}`, `A previous temporary file remains: ${tempPath}`));
   const base = m2gCompat.strip(fs.readFileSync(sourcePath));
   const targetSize = targetProfile.size;
   const buffer = Buffer.alloc(Math.max(base.length, targetSize));
@@ -402,33 +437,33 @@ function makeM2gPatchedTemp(sourcePath, currentProfile, targetProfile, tempPath)
   // its warp/guard state may differ from the currently recognized input.
   for (const profile of [currentProfile, targetProfile]) {
     for (const { offset, payload } of readPatch(path.join(ASSET_DIRECTORY, profile.patch))) {
-      if (offset + payload.length > buffer.length) fail('M2G 보존 XOR 범위 오류');
+      if (offset + payload.length > buffer.length) fail(t('M2G 보존 XOR 범위 오류', 'M2G-preserving XOR bounds error'));
       for (let i = 0; i < payload.length; i++) buffer[offset + i] ^= payload[i];
     }
   }
   const target = buffer.subarray(0, targetSize);
-  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase() !== targetProfile.sha1) fail('M2G 보존 가드 패치 검증 실패');
+  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase() !== targetProfile.sha1) fail(t('M2G 보존 가드 패치 검증 실패', 'M2G-preserving guard patch verification failed'));
   const expected = m2gCompat.forBase(targetProfile.sha1);
-  if (!expected) fail('지원하지 않는 M2G/가드 조합입니다.');
+  if (!expected) fail(t('지원하지 않는 M2G/가드 조합입니다.', 'Unsupported M2G/guard combination.'));
   const output = m2gCompat.rebuild(target);
   fs.writeFileSync(tempPath, output, { flag: 'wx' });
-  if (sha1File(tempPath) !== expected.sha1) fail('M2G 보존 임시 파일 검증 실패');
+  if (sha1File(tempPath) !== expected.sha1) fail(t('M2G 보존 임시 파일 검증 실패', 'M2G-preserving temporary file verification failed'));
   return expected.sha1;
 }
 
 function makeEmbeddedTemp(sourcePath, currentProfile, targetProfile, tempPath, enabled) {
-  if (fs.existsSync(tempPath)) fail('이전 임시 파일이 남아 있습니다.');
+  if (fs.existsSync(tempPath)) fail(t('이전 임시 파일이 남아 있습니다.', 'A previous temporary file remains.'));
   const source = embedded.set(fs.readFileSync(sourcePath), true);
   const buffer = Buffer.alloc(Math.max(source.length, targetProfile.size));
   source.copy(buffer);
   for (const profile of [currentProfile,targetProfile]) {
     for (const {offset,payload} of readPatch(path.join(ASSET_DIRECTORY,profile.patch))) {
-      if (offset + payload.length > buffer.length) fail('패치 범위 오류');
+      if (offset + payload.length > buffer.length) fail(t('패치 범위 오류', 'Patch bounds error'));
       for (let i=0;i<payload.length;i++) buffer[offset+i]^=payload[i];
     }
   }
   const target=buffer.subarray(0,targetProfile.size);
-  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase()!==targetProfile.sha1) fail('가드 변환 검증 실패');
+  if (crypto.createHash('sha1').update(target).digest('hex').toUpperCase()!==targetProfile.sha1) fail(t('가드 변환 검증 실패', 'Guard conversion verification failed'));
   const result=embedded.set(target,enabled);
   fs.writeFileSync(tempPath,result,{flag:'wx'});
   return sha1File(tempPath);
@@ -468,7 +503,7 @@ function createBackup(status, reason) {
       { encoding: 'utf8', flag: 'wx' },
     );
   } catch (error) {
-    error.message += `\n불완전한 백업 폴더를 확인하세요: ${directory}`;
+    error.message += t(`\n불완전한 백업 폴더를 확인하세요: ${directory}`, `\nCheck the incomplete backup folder: ${directory}`);
     throw error;
   }
   return directory;
@@ -489,14 +524,14 @@ function readAndValidateBackup(directory) {
   try {
     metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
   } catch (error) {
-    fail(`백업 정보를 읽을 수 없습니다: ${metadataPath}\n${error.message}`);
+    fail(t(`백업 정보를 읽을 수 없습니다: ${metadataPath}\n${error.message}`, `Cannot read backup information: ${metadataPath}\n${error.message}`));
   }
   for (const key of FILE_KEYS) {
     const record = metadata.files?.[key];
-    if (!record || !record.name || !record.sha1) fail(`백업 정보에 ${key} 파일이 없습니다.`);
+    if (!record || !record.name || !record.sha1) fail(t(`백업 정보에 ${key} 파일이 없습니다.`, `Backup information is missing file ${key}.`));
     const filePath = path.join(directory, record.name);
     if (!fs.existsSync(filePath) || fs.statSync(filePath).size !== record.size || sha1File(filePath) !== record.sha1) {
-      fail(`백업 파일 검증에 실패했습니다: ${filePath}`);
+      fail(t(`백업 파일 검증에 실패했습니다: ${filePath}`, `Backup file verification failed: ${filePath}`));
     }
   }
   return metadata;
@@ -513,7 +548,7 @@ function cleanupFiles(paths) {
 function transactionalReplace(replacements) {
   const rollbackPaths = replacements.map(({ target }) => `${target}.lid-jg.rollback`);
   for (const rollbackPath of rollbackPaths) {
-    if (fs.existsSync(rollbackPath)) fail(`이전 작업의 복구 파일이 남아 있습니다: ${rollbackPath}`);
+    if (fs.existsSync(rollbackPath)) fail(t(`이전 작업의 복구 파일이 남아 있습니다: ${rollbackPath}`, `A recovery file from a previous operation remains: ${rollbackPath}`));
   }
 
   const movedOriginals = [];
@@ -543,12 +578,12 @@ function transactionalReplace(replacements) {
 
 function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) {
   selectBuild(gameDirectory);
-  if (!manifest.common.profiles[strengthName]) fail(`알 수 없는 강도입니다: ${strengthName}`);
-  if (!GROGGY_ORDER.includes(groggyName)) fail(`알 수 없는 그로기 설정입니다: ${groggyName}`);
-  if (!MELEE_GUARD_ORDER.includes(meleeGuardName)) fail(`알 수 없는 근접무기 방어 설정입니다: ${meleeGuardName}`);
+  if (!manifest.common.profiles[strengthName]) fail(t(`알 수 없는 강도입니다: ${strengthName}`, `Unknown strength: ${strengthName}`));
+  if (!GROGGY_ORDER.includes(groggyName)) fail(t(`알 수 없는 그로기 설정입니다: ${groggyName}`, `Unknown groggy setting: ${groggyName}`));
+  if (!MELEE_GUARD_ORDER.includes(meleeGuardName)) fail(t(`알 수 없는 근접무기 방어 설정입니다: ${meleeGuardName}`, `Unknown melee guard setting: ${meleeGuardName}`));
   let targetRuntimeName = findRuntimeProfile(groggyName, meleeGuardName);
-  if (!targetRuntimeName) fail(`지원하지 않는 조합입니다: 그로기 ${groggyName}, 근접 방어 ${meleeGuardName}`);
-  if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
+  if (!targetRuntimeName) fail(t(`지원하지 않는 조합입니다: 그로기 ${groggyName}, 근접 방어 ${meleeGuardName}`, `Unsupported combination: groggy ${groggyName}, melee guard ${meleeGuardName}`));
+  if (isGameRunning()) fail(t('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.', 'LET IT DIE is running. Close the game completely and try again.'));
 
   const status = readStatus(gameDirectory);
   assertSupported(status);
@@ -588,43 +623,43 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
     transactionalReplace(FILE_KEYS.map((key) => ({ target: status.paths[key], temp: temps[key] })));
   } catch (error) {
     cleanupFiles(Object.values(temps));
-    error.message += `\n변경 전 백업: ${backupPath}`;
+    error.message += t(`\n변경 전 백업: ${backupPath}`, `\nPre-change backup: ${backupPath}`);
     throw error;
   }
 
   const verified = readStatus(gameDirectory);
   restoreSafety.mark(backupPath, gameDirectory);
   if (verified.common.profile !== strengthName || verified.groggy.profile !== targetRuntimeName || !!verified.groggy.m2g !== !!status.groggy.m2g || !executableIsValid(verified)) {
-    fail(`적용 후 검증에 실패했습니다. 변경 전 백업: ${backupPath}`);
+    fail(t(`적용 후 검증에 실패했습니다. 변경 전 백업: ${backupPath}`, `Post-apply verification failed. Pre-change backup: ${backupPath}`));
   }
   return { changed: true, backupPath, status: verified };
 }
 
 function restoreBackup(gameDirectory, backupPath) {
-  if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
+  if (isGameRunning()) fail(t('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.', 'LET IT DIE is running. Close the game completely and try again.'));
   const metadata = readAndValidateBackup(backupPath);
   const current = readStatus(gameDirectory);
-  if ((metadata.steamBuildId || null) !== (manifest.steamBuildId || null)) fail('게임 업데이트 전후의 백업은 서로 복원할 수 없습니다. 현재 빌드에서 만든 백업을 선택하세요.');
+  if ((metadata.steamBuildId || null) !== (manifest.steamBuildId || null)) fail(t('게임 업데이트 전후의 백업은 서로 복원할 수 없습니다. 현재 빌드에서 만든 백업을 선택하세요.', 'Backups cannot be restored across game builds. Select a backup from the current build.'));
   restoreSafety.assertSafe(metadata, gameDirectory);
   const safetyBackup = createBackup(current, `before-restore:${path.basename(backupPath)}`);
   const temps = {};
   try {
     for (const key of FILE_KEYS) {
       temps[key] = `${current.paths[key]}.lid-jg.tmp`;
-      if (fs.existsSync(temps[key])) fail(`이전 작업의 임시 파일이 남아 있습니다: ${temps[key]}`);
+      if (fs.existsSync(temps[key])) fail(t(`이전 작업의 임시 파일이 남아 있습니다: ${temps[key]}`, `A temporary file from a previous operation remains: ${temps[key]}`));
       fs.copyFileSync(path.join(backupPath, metadata.files[key].name), temps[key], fs.constants.COPYFILE_EXCL);
-      if (sha1File(temps[key]) !== metadata.files[key].sha1) fail(`복원 임시 파일 검증 실패: ${temps[key]}`);
+      if (sha1File(temps[key]) !== metadata.files[key].sha1) fail(t(`복원 임시 파일 검증 실패: ${temps[key]}`, `Restore temporary-file verification failed: ${temps[key]}`));
     }
     transactionalReplace(FILE_KEYS.map((key) => ({ target: current.paths[key], temp: temps[key] })));
   } catch (error) {
     cleanupFiles(Object.values(temps));
-    error.message += `\n복원 직전 안전 백업: ${safetyBackup}`;
+    error.message += t(`\n복원 직전 안전 백업: ${safetyBackup}`, `\nPre-restore safety backup: ${safetyBackup}`);
     throw error;
   }
 
   for (const key of FILE_KEYS) {
     if (sha1File(current.paths[key]) !== metadata.files[key].sha1) {
-      fail(`복원 후 ${key} 파일 검증에 실패했습니다. 안전 백업: ${safetyBackup}`);
+      fail(t(`복원 후 ${key} 파일 검증에 실패했습니다. 안전 백업: ${safetyBackup}`, `File ${key} verification failed after restore. Safety backup: ${safetyBackup}`));
     }
   }
   restoreSafety.mark(safetyBackup, gameDirectory);
@@ -637,7 +672,7 @@ function parseCommandLine(argv) {
   let yes = false;
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === '--game') {
-      if (!argv[index + 1]) fail('--game 뒤에 설치 폴더가 필요합니다.');
+      if (!argv[index + 1]) fail(t('--game 뒤에 설치 폴더가 필요합니다.', '--game requires an installation folder.'));
       gameDirectory = argv[++index];
     } else if (argv[index] === '--yes') {
       yes = true;
@@ -655,9 +690,13 @@ async function confirm(rl, message, assumeYes) {
 }
 
 function printStrengthChoices() {
-  console.log('\n저스트가드 강도');
+  console.log(t('\n저스트가드 강도', '\nJust Guard strength'));
   STRENGTH_ORDER.forEach((name, index) => {
     const item = manifest.common.profiles[name];
+    if (t(false, true)) {
+      console.log(`${index + 1}. ${strengthDisplay(name)} — ready ${Math.round(item.guardReady * 1000)}ms / start ${Math.round(item.start * 1000)}ms / duration ${item.duration.toFixed(3)}s${item.probabilityUnlocked ? ' / high-tier weapon restriction removed' : ''}`);
+      return;
+    }
     console.log(`${index + 1}. ${item.label} — 준비 ${Math.round(item.guardReady * 1000)}ms / 시작 ${Math.round(item.start * 1000)}ms / 유지 ${item.duration.toFixed(3)}초` +
       `${item.probabilityUnlocked ? ' / 고급 무기 제한 해제' : ''}`);
   });
@@ -667,75 +706,75 @@ async function interactive(gameDirectory, rl) {
   while (true) {
     const status = readStatus(gameDirectory);
     printStatus(status);
-    console.log('\n1. 설정 적용');
-    console.log('2. 현재 게임 파일 백업');
-    console.log('3. 최신 백업 복원');
-    console.log('4. 종료');
-    const choice = (await rl.question('선택: ')).trim();
+    console.log(t('\n1. 설정 적용', '\n1. Apply settings'));
+    console.log(t('2. 현재 게임 파일 백업', '2. Back up current game files'));
+    console.log(t('3. 최신 백업 복원', '3. Restore latest backup'));
+    console.log(t('4. 종료', '4. Exit'));
+    const choice = (await rl.question(t('선택: ', 'Select: '))).trim();
 
     if (choice === '4') return;
     if (choice === '1') {
       assertSupported(status);
       printStrengthChoices();
-      const strengthChoice = Number((await rl.question('강도 선택: ')).trim());
+      const strengthChoice = Number((await rl.question(t('강도 선택: ', 'Select strength: '))).trim());
       const strength = STRENGTH_ORDER[strengthChoice - 1];
       if (!strength) {
-        console.log('잘못된 선택입니다.');
+        console.log(t('잘못된 선택입니다.', 'Invalid selection.'));
         continue;
       }
-      console.log('\n그로기 판정');
-      console.log('1. OFF — 순정 Flip 반응');
-      console.log('2. ON — 직접 공격한 상대를 정식 Groggy 상태로');
-      const groggyChoice = Number((await rl.question('그로기 선택: ')).trim());
+      console.log(t('\n그로기 판정', '\nGroggy effect'));
+      console.log(t('1. OFF — 순정 Flip 반응', '1. OFF — stock Flip response'));
+      console.log(t('2. ON — 직접 공격한 상대를 정식 Groggy 상태로', '2. ON — put the direct attacker into the Groggy state'));
+      const groggyChoice = Number((await rl.question(t('그로기 선택: ', 'Select groggy: '))).trim());
       const groggy = GROGGY_ORDER[groggyChoice - 1];
       if (!groggy) {
-        console.log('잘못된 선택입니다.');
+        console.log(t('잘못된 선택입니다.', 'Invalid selection.'));
         continue;
       }
-      console.log('\n근접무기 저스트가드 불가 제한');
-      console.log('1. OFF — 순정 제한 유지');
-      console.log('2. ON — 직접 근접 공격 제한 해제 + 성공 시 화염·전기·독 후속 피해 차단');
-      const meleeGuardChoice = Number((await rl.question('근접무기 방어 선택: ')).trim());
+      console.log(t('\n근접무기 저스트가드 불가 제한', '\nMelee Just Guard restrictions'));
+      console.log(t('1. OFF — 순정 제한 유지', '1. OFF — preserve stock restrictions'));
+      console.log(t('2. ON — 직접 근접 공격 제한 해제 + 성공 시 화염·전기·독 후속 피해 차단', '2. ON — remove direct melee restrictions + block follow-up fire/electric/poison damage on success'));
+      const meleeGuardChoice = Number((await rl.question(t('근접무기 방어 선택: ', 'Select melee guard: '))).trim());
       const meleeGuard = MELEE_GUARD_ORDER[meleeGuardChoice - 1];
       if (!meleeGuard) {
-        console.log('잘못된 선택입니다.');
+        console.log(t('잘못된 선택입니다.', 'Invalid selection.'));
         continue;
       }
-      const strengthLabel = manifest.common.profiles[strength].label;
-      if (!await confirm(rl, `${strengthLabel} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, false)) continue;
+      const strengthLabel = strengthDisplay(strength);
+      if (!await confirm(rl, t(`${strengthLabel} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, `Apply ${strengthLabel} / groggy ${groggy.toUpperCase()} / melee guard ${meleeGuard.toUpperCase()}?`), false)) continue;
       const result = applySettings(gameDirectory, strength, groggy, meleeGuard);
-      console.log(result.changed ? `\n적용 완료\n백업: ${result.backupPath}` : '\n이미 선택한 설정입니다.');
+      console.log(result.changed ? t(`\n적용 완료\n백업: ${result.backupPath}`, `\nApplied\nBackup: ${result.backupPath}`) : t('\n이미 선택한 설정입니다.', '\nAlready using these settings.'));
       continue;
     }
     if (choice === '2') {
-      if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
+      if (isGameRunning()) fail(t('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.', 'LET IT DIE is running. Close the game completely and try again.'));
       const backupPath = createBackup(status, 'manual');
-      console.log(`\n백업 완료: ${backupPath}`);
+      console.log(t(`\n백업 완료: ${backupPath}`, `\nBackup created: ${backupPath}`));
       continue;
     }
     if (choice === '3') {
       const backups = listBackups();
       if (backups.length === 0) {
-        console.log('\n복원할 백업이 없습니다.');
+        console.log(t('\n복원할 백업이 없습니다.', '\nNo backup available to restore.'));
         continue;
       }
       const latest = backups[0];
       const info = readAndValidateBackup(latest);
-      console.log(`\n복원 대상: ${latest}`);
-      console.log(`생성 시각: ${info.createdAt}`);
-      console.log(`사유: ${info.reason}`);
-      if (!await confirm(rl, '이 백업으로 게임 파일 3개를 복원할까요?', false)) continue;
+      console.log(t(`\n복원 대상: ${latest}`, `\nRestore target: ${latest}`));
+      console.log(t(`생성 시각: ${info.createdAt}`, `Created: ${info.createdAt}`));
+      console.log(t(`사유: ${info.reason}`, `Reason: ${info.reason}`));
+      if (!await confirm(rl, t('이 백업으로 게임 파일 3개를 복원할까요?', 'Restore the three game files from this backup?'), false)) continue;
       const result = restoreBackup(gameDirectory, latest);
-      console.log(`\n복원 완료: ${result.backupPath}`);
-      console.log(`복원 직전 안전 백업: ${result.safetyBackup}`);
+      console.log(t(`\n복원 완료: ${result.backupPath}`, `\nRestored: ${result.backupPath}`));
+      console.log(t(`복원 직전 안전 백업: ${result.safetyBackup}`, `Pre-restore safety backup: ${result.safetyBackup}`));
       continue;
     }
-    console.log('잘못된 선택입니다.');
+    console.log(t('잘못된 선택입니다.', 'Invalid selection.'));
   }
 }
 
 async function main() {
-  const parsed = parseCommandLine(process.argv.slice(2));
+  const parsed = parseCommandLine(configure(process.argv.slice(2), __dirname));
   const gameDirectory = discoverGameDirectory(parsed.gameDirectory);
   const command = String(parsed.positional[0] || '').toLowerCase();
   const interactiveMode = !command;
@@ -750,16 +789,16 @@ async function main() {
       return;
     }
     if (command === 'repair-guard-state') {
-      if (isGameRunning()) fail('LET IT DIE를 완전히 종료한 뒤 다시 실행하세요.');
-      if (!await confirm(rl, '확인된 가드 스크립트의 잘못된 점프를 수정할까요?', parsed.yes)) return;
+      if (isGameRunning()) fail(t('LET IT DIE를 완전히 종료한 뒤 다시 실행하세요.', 'Close LET IT DIE completely and try again.'));
+      if (!await confirm(rl, t('확인된 가드 스크립트의 잘못된 점프를 수정할까요?', 'Repair the identified incorrect guard-script jumps?'), parsed.yes)) return;
       const result = require('./guard-state-repair').repair(gameDirectory, path.join(__dirname, 'backups'));
-      console.log(result.changed ? `가드 분기 수정 완료. 변경 전 백업: ${result.backupPath}` : '이미 수정되어 있습니다.');
+      console.log(result.changed ? t(`가드 분기 수정 완료. 변경 전 백업: ${result.backupPath}`, `Guard branches repaired. Pre-change backup: ${result.backupPath}`) : t('이미 수정되어 있습니다.', 'Already repaired.'));
       return;
     }
     if (command === 'backup') {
-      if (isGameRunning()) fail('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.');
+      if (isGameRunning()) fail(t('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.', 'LET IT DIE is running. Close the game completely and try again.'));
       const backupPath = createBackup(readStatus(gameDirectory), 'manual-cli');
-      console.log(`백업 완료: ${backupPath}`);
+      console.log(t(`백업 완료: ${backupPath}`, `Backup created: ${backupPath}`));
       return;
     }
     if (command === 'apply') {
@@ -767,33 +806,33 @@ async function main() {
       const groggy = String(parsed.positional[2] || '').toLowerCase();
       const meleeGuard = String(parsed.positional[3] || 'off').toLowerCase();
       if (!manifest.common.profiles[strength] || !GROGGY_ORDER.includes(groggy) || !MELEE_GUARD_ORDER.includes(meleeGuard)) {
-        fail('사용법: apply [stock|soft|wide|iron] [그로기 off|on] [근접 방어 off|on]');
+        fail(t('사용법: apply [stock|soft|wide|iron] [그로기 off|on] [근접 방어 off|on]', 'Usage: apply [stock|soft|wide|iron] [groggy off|on] [melee guard off|on]'));
       }
       const status = readStatus(gameDirectory);
       printStatus(status);
-      if (!await confirm(rl, `${manifest.common.profiles[strength].label} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, parsed.yes)) return;
+      if (!await confirm(rl, t(`${manifest.common.profiles[strength].label} / 그로기 ${groggy.toUpperCase()} / 근접 방어 ${meleeGuard.toUpperCase()}를 적용할까요?`, `Apply ${strengthDisplay(strength)} / groggy ${groggy.toUpperCase()} / melee guard ${meleeGuard.toUpperCase()}?`), parsed.yes)) return;
       const result = applySettings(gameDirectory, strength, groggy, meleeGuard);
-      console.log(result.changed ? `적용 완료\n백업: ${result.backupPath}` : '이미 선택한 설정입니다.');
+      console.log(result.changed ? t(`적용 완료\n백업: ${result.backupPath}`, `Applied\nBackup: ${result.backupPath}`) : t('이미 선택한 설정입니다.', 'Already using these settings.'));
       return;
     }
     if (command === 'restore') {
       const backups = listBackups();
       const backupPath = parsed.positional[1] ? path.resolve(parsed.positional[1]) : backups[0];
-      if (!backupPath) fail('복원할 백업이 없습니다.');
+      if (!backupPath) fail(t('복원할 백업이 없습니다.', 'No backup available to restore.'));
       readAndValidateBackup(backupPath);
-      if (!await confirm(rl, `${backupPath} 백업을 복원할까요?`, parsed.yes)) return;
+      if (!await confirm(rl, t(`${backupPath} 백업을 복원할까요?`, `Restore backup ${backupPath}?`), parsed.yes)) return;
       const result = restoreBackup(gameDirectory, backupPath);
-      console.log(`복원 완료: ${result.backupPath}`);
-      console.log(`복원 직전 안전 백업: ${result.safetyBackup}`);
+      console.log(t(`복원 완료: ${result.backupPath}`, `Restored: ${result.backupPath}`));
+      console.log(t(`복원 직전 안전 백업: ${result.safetyBackup}`, `Pre-restore safety backup: ${result.safetyBackup}`));
       return;
     }
-    fail('사용법: node lid-justguard.js [status | backup | apply 강도 그로기 근접방어 | restore] [--game 경로] [--yes]');
+    fail(t('사용법: node lid-justguard.js [status | backup | apply 강도 그로기 근접방어 | restore] [--game 경로] [--yes]', 'Usage: node lid-justguard.js [status | backup | apply strength groggy meleeGuard | restore] [--game path] [--yes] [--lang ko|en]'));
   } finally {
     rl.close();
   }
 }
 
 main().catch((error) => {
-  console.error(`\n오류: ${error.userFacing ? error.message : (error.stack || error.message)}`);
+  console.error(t(`\n오류: ${error.userFacing ? error.message : (error.stack || error.message)}`, `\nError: ${error.userFacing ? error.message : (error.stack || error.message)}`));
   process.exitCode = 1;
 });

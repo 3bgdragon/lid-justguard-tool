@@ -1,137 +1,36 @@
-# LET IT DIE 저스트가드 패치 도구
+# LET IT DIE Just Guard Tool
 
-## 1.8.0 개발판: Steam 빌드 25386710 대응
+[English](README.md) | [한국어](README.ko.md)
 
-- 새 캐릭터 패키지 `2E34F1F72B14B7D18AC701D87FFEBD14A63C94E4`와 BrgGame `C1C9738885B6672F61026A3767EAD65A08D7CD51`을 지원합니다.
-- 강도 4종과 그로기·근접 방어 ON/OFF를 지원하며, 완화 유지시간은 0.50초입니다.
-- 애니메이션 객체 5개를 비교하고 전투 함수 7개의 변경된 이름·객체 참조를 대조하여 새 번호로 이식했습니다. 기존 빌드 지원은 유지합니다.
-- 실제 설치 파일의 복사본에서 16개 설정 조합의 적용·재적용·백업 복원을 검증했습니다. 복원 후 대상 파일이 원본과 바이트 단위로 일치하며, 실제 설치 파일은 변경하지 않았습니다. `LID_GUARD_25386710_GAME`을 원본 게임 폴더로 지정하고 `node --test tests/build25386710.test.js`로 재현할 수 있습니다.
-- **새 빌드는 저스트가드 단독 적용 기준입니다. M2G·워프 병용 파일은 아직 지원·검증하지 않았으며, 알 수 없는 패키지는 적용을 차단합니다.** 아래 이전 빌드의 병용 검증 결과를 새 빌드에 적용하지 마세요.
-- 복사본 검증과 실게임 검증은 별개입니다. **새 빌드의 실게임 전투 검증은 아직 필요합니다.** 게임 종료 후 적용하고 문제가 있으면 해당 적용 직전 백업을 복원하세요. 다른 패치나 게임 업데이트 이후에는 예전 백업으로 덮어쓰지 마세요.
+Configures Just Guard timing, groggy reactions, melee guard restrictions and elemental follow-up protection.
 
-## 1.7.0 개발판: 세 도구 병용과 안전 복원
+## Requirements
 
-M2G `1.3.0`·워프 `1.3.0-dev`와 함께 갱신하세요. 확인된 빌드 25244463 입력에는 이미 M2G 나이프 함수가 포함되어 있었으며, 이를 정상 표시하고 나이프 ON/OFF 모두 가드 변경 중 유지합니다. 완화 0.50초 설정은 그대로입니다.
+- Steam offline edition of LET IT DIE on Windows.
+- Node.js 18 or newer. No npm install is needed for normal use.
+- Support is determined by file/schema checks, not just the displayed game version. Never bypass an unsupported-file error.
 
-전체 백업 복원 전에 캐릭터 패키지·BrgGame·워프 맵·BrgStart·실행 파일의 전후 SHA-256 상태를 함께 검사합니다. 나중에 다른 패치가 적용됐거나 안전 이력이 없는 구형 백업이면 덮어쓰지 않고 중단합니다. 가드만 끄려면 순정 강도 및 그로기/근접 방어 OFF를 선택하세요. 전체 복원은 선택 제거가 아니며, 백업 파일 자체는 삭제하지 않습니다. 새 조합의 실게임 전투 검증은 별도로 필요합니다.
+## Installation
 
-## 1.6.0 개발판: Steam 빌드 25244463 대응
+1. Use **Code → Download ZIP**, then extract the archive.
+2. Back up your save separately and close the game completely.
+3. Run `run-en.bat` for English, or use `run.bat --lang ko` for Korean. If Windows denies Steam-folder write access, run the launcher as administrator.
+4. Read confirmations carefully and keep every backup created by the tool.
 
-이번 새 빌드의 **완화 유지시간을 0.85초에서 0.50초로 단축**했습니다. 준비 40ms·시작 60ms와 넓게/다리미급 설정은 유지합니다. 이전 0.85초 적용본도 인식하며, `완화`를 다시 적용하면 0.50초로 변경됩니다. 이전 게임 빌드의 설정값은 그대로입니다.
+English: `node --no-warnings lid-justguard.js --lang en`.
+Korean: `node --no-warnings lid-justguard.js --lang ko`.
+Run these commands in an administrator terminal if Steam-folder access is denied. Without an explicit language, the tool reads the parent folder's `let-it-die-tool-settings.json` preference, then defaults to Korean.
 
-새 캐릭터 패키지 `5124C1448EA936B06D041AF4CDFC8FD2EA69888D`와 워프 적용본 `F83CA59BDFA8232C7DAA0557536C4D5F6D49C909`를 인식합니다. 가드 강도 4종, 그로기·근접 방어 ON/OFF 4종과 각 워프 병용 상태를 지원합니다. 이전 빌드 지원은 유지합니다.
+## Important behavior
 
-새 빌드의 가드 함수 7개 및 수정 대상 애니메이션 객체 5개가 기존 검증본과 동일함을 확인하고 패치를 옮겼습니다. 워프의 맵·에스컬레이터 이동 코드는 변경하지 않으며, 실행 파일에서는 가드 패키지 해시 연결만 갱신합니다. **새 빌드의 가드 실게임 전투 검증은 아직 필요합니다.**
+Changes game packages and executable hash links. Only recognized builds and patch combinations are supported. Read the build-specific timing and compatibility notes in the Korean guide.
 
-복사본에서 강도 4종 × 그로기·근접 방어 4종 × 워프 ON/OFF의 32개 조합을 검증했습니다. 워프 제거 순서 변경 및 백업 복원 후 대상 5개 파일의 SHA-256이 최초 복사본과 일치했고, 원본 설치 파일도 변경되지 않았습니다. 재현 테스트는 `tests/build25244463.test.js`에 있으며, 통합 검증 시 `LID_GUARD_25244463_GAME`에 읽기 전용 원본 게임 폴더, `LID_GUARD_25244463_WARP`에 워프툴 폴더를 지정합니다. 테스트는 별도 복사본에만 적용하며 자동 백업으로 디스크 공간을 사용합니다.
+## Backups and compatibility
 
-1.6.0 당시에는 워프툴 `1.2.1-dev` 이상이 필요했고 M2G 상태를 별도로 인식하지 못했습니다. 현재 세 도구 병용 버전은 위 1.7.0 안내를 따르세요. Node.js만 필요하며 게임 종료 후 실행하세요.
+Do not delete an older tool folder until its backups have been preserved. Backups are local files, not stored on GitHub. Restoring game files does not undo purchased items, spent currency or subsequent save changes. Compatibility with every other mod or installation order is not guaranteed.
 
-> 1.5.1 개발판: 빌드 `25136512`의 M2G 나이프 모드와 워프 병용 파일을 인식합니다. M2G 신·구 적용본 16종을 검증하고, 가드 설정 변경 시 M2G와 워프를 유지합니다. 파일 해시 연결 상태도 패키지 지원 여부와 별도로 표시합니다. 알려지지 않은 파일을 무조건 허용하는 기능은 아닙니다.
+## Translation status
 
-M2G 구버전 적용본은 가드 설정을 변경하면 동일 기능의 Node.js 적용본으로 정규화됩니다. 변경 전 파일은 자동 백업됩니다. 전체 백업 복원은 다른 도구로 이후 변경한 내용을 보존하는 선택적 제거와 다르므로, 다른 패치 적용 뒤에는 주의하세요. 새 빌드의 실게임 전투 검증 안내는 계속 유효합니다.
+CLI menus, status displays, confirmations and tool-generated runtime errors support English and Korean. File paths, hashes and stored settings are not translated. System errors follow Windows/Node.js language. This tool does not translate the game itself. Historical release notes remain in the [Korean guide](README.ko.md). Translation does not add support for new game builds.
 
-> 1.5.0 개발판: 2026-09-08 Steam 빌드 `25136512`를 자동 인식합니다. 새 빌드용 가드 강도 4종과 그로기·근접 방어 조합, 워프 도구의 중앙 메뉴 유지 프로필을 추가했습니다. 복사본에서 적용·설정 변경·원복을 검증했으며 새 빌드 실게임 전투 검증은 아직 필요합니다. 구버전 지원도 유지합니다.
-
-게임을 종료한 뒤 `run.bat`에서 기존처럼 원하는 설정을 적용하세요. 새 워프 도구와 병용할 경우 두 도구 모두 새 빌드 대응판을 사용해야 합니다. 업데이트 전 백업은 새 게임에 복원하지 못하도록 차단하며, 구버전 `.bak` 파일은 새 빌드의 기준 파일로 사용하지 않습니다. 세이브와 마스터 DB는 변경하지 않습니다.
-
-LET IT DIE Steam 오프라인판 5.0.1.0의 기본 가드 저스트가드 판정 강도, 근접무기 방어 제한, 근접 속성 피해 차단, 성공 시 상대 그로기 판정을 선택해 적용하고 복원하는 Windows용 도구입니다.
-
-> Windows 전용 · Steam 오프라인판 5.0.1.0 전용 · Node.js 18 이상 필요
-
-## 사용법
-
-1. LET IT DIE를 완전히 종료합니다.
-2. `run.bat`을 더블클릭합니다. 게임 폴더 수정 권한을 위한 Windows 관리자 확인 창이 표시됩니다.
-3. `설정 적용`에서 저스트가드 강도, 그로기 ON/OFF, 근접무기 방어 제한 ON/OFF를 선택합니다.
-
-Steam 라이브러리를 읽어 설치 폴더를 자동 탐색합니다. 자동 탐색에 실패하면 명령줄의 `--game` 옵션으로 직접 지정할 수 있습니다.
-
-## 저스트가드 강도
-
-| 설정 | 가드 준비 | 판정 시작 | 유지시간 | 고급 무기 확률 제한 |
-|---|---:|---:|---:|---|
-| 순정 | 63ms | 103ms | 0.104초 | 순정 |
-| 완화 | 40ms | 60ms | 0.500초 (25244463) / 0.850초 (이전 빌드) | 해제 |
-| 넓게 | 25ms | 35ms | 1.000초 | 해제 |
-| 다리미급 | 15ms | 20ms | 1.200초 | 해제 |
-
-그로기 `ON`은 직접 근접 공격한 상대에게 게임의 정식 `BrgDamageType_Groggy` 반응을 적용합니다. 투사체를 저스트가드한 경우 원거리 발사자에게 그로기가 전달되지는 않습니다. `OFF`는 순정 `Flip` 반응으로 되돌립니다.
-
-## 근접무기 저스트가드 불가 제한 및 판정 안정화 (v1.4.1)
-
-`ON`은 곡괭이(`PT_ARM_WP012`) 및 양손도끼(`PT_ARM_WP003`)처럼 대미지 속성 자체에서 저스트가드를 금지한 근접 공격을 기본 가드로 완벽히 막을 수 있게 합니다. 살아 있는 직접 공격자 검사는 유지하며, 근접용 `GuardBreakBlow`와 `GuardBreakSkillMove`의 저스트가드 금지 속성도 함께 해제합니다.
-
-### 핵심 결함 해결 내역:
-1. **확장 판정 구간(0.242초 이후) 이펙트(VFX) 및 효과음(SFX) 정상 출력:**
-   순정 애니메이션 노티파이가 0.242초에 종료되면서 `mbJustGuardFrame`을 강제 `false`로 리셋하여 판정 및 스파크 시각/청각 이펙트(VFX/SFX)가 조기 소멸하던 엔진 코드를 패치하여, 확장된 판정 시간(최대 1.200초) 전 구간에서 저스트가드 스파크(VFX)와 특유의 챙- 방어 성공음(SFX)이 정상적으로 출력됩니다.
-2. **적(AI) 동반 판정 확대 차단 및 플레이어 전용 격리:**
-   가드 애니메이션 공유로 인해 적 AI도 동일하게 판정이 비정상적으로 넓어지던 문제를 해결하여, 적 AI의 저스트가드 발동을 원천 차단하고 오직 플레이어 캐릭터에게만 완화된 저스트가드 판정이 적용되도록 격리했습니다.
-3. **곡괭이(`PT_ARM_WP012`) 및 양손도끼(`PT_ARM_WP003`) 저스트가드 불가 문제 해결:**
-   곡괭이 및 양손도끼 공격의 가드 불가 판정(`IsJustGuardImpossibleDamageType`, `IsCanGuardState`, `IsCanGuard`)을 우회 및 해제하여, 해당 공격들도 방어 시 완벽하게 저스트가드 판정이 발동합니다.
-4. **가드 유지 시 무한 저스트가드 발동 버그 수정 (v1.4.1):**
-   가드를 올리고 가만히 서 있을 때 시간 제한 없이 영구적으로 저스트가드가 터지던 현상을 해결했습니다. 플레이어 전용 판정 체인에서 엔진의 타이밍 검사(`mbJustGuardEnable`)를 충실히 거치도록 정상화하여, 선택한 강도 시간(완화 0.85초, 넓게 1.0초, 다리미급 1.2초) 동안만 저스트가드가 발동하고 이후에는 일반 가드로 정확히 전환됩니다.
-
-또한 직접 근접공격을 저스트가드했을 때 화염 지속 피해, 전기 지속 피해·전이, 독 축적이 발생하지 않도록 차단합니다. 타격 순간의 직접 피해는 게임 원본 로직과 동일하게 0으로 유지됩니다.
-
-총탄·투사체·폭발·환경 피해는 대상이 아닙니다. 전기 광선과 바람 투사체에 설정된 저스트가드 금지 속성도 그대로 유지합니다. `OFF`는 해당 제한을 순정 상태로 되돌립니다.
-
-판정 시간 확대는 `ANI_CH_DEF_Guard_In` 기본 가드에 적용됩니다. 다리미처럼 무기 공격 동작 자체에 들어 있는 고유 패링 시간은 변경하지 않습니다.
-
-## 안전 장치와 복원
-
-- 실행 중인 게임이 있으면 패치와 복원을 중단합니다.
-- 지원하는 원본/도구 생성 파일의 SHA-1만 수정합니다.
-- 게임 원본 파일이나 원본 청크를 포함하지 않고, 합법적으로 설치된 게임에만 적용되는 XOR 델타를 사용합니다.
-- 패치 데이터 범위, 결과 파일 크기, 결과 SHA-1을 적용 전에 검증합니다.
-- 실행 파일 안의 UPK 해시 항목도 함께 갱신하고 재검증합니다.
-- 설정을 변경하기 전에 대상 파일 3개를 `backups/<시각>` 폴더에 자동 백업합니다.
-- `최신 백업 복원`은 복원 직전 상태를 다시 안전 백업한 후 복원합니다.
-- 한 백업은 약 240MB입니다.
-
-`순정 + 그로기 OFF + 근접 방어 OFF`를 적용하면 이 도구가 수정한 저스트가드 시간, 확률 제한, 근접무기 방어 제한, 근접 속성 피해 차단, 그로기 변경을 순정 상태로 되돌립니다. 다른 도구가 같은 UPK 파일을 수정했다면 SHA-1 검증에서 안전하게 중단합니다.
-
-## 공개 배포 및 권리 고지
-
-이 프로젝트는 비공식 팬 제작 도구이며 GungHo Online Entertainment 및 LET IT DIE 제작·배급사와 관련이 없습니다. 게임 원본 파일은 포함하지 않습니다. 사용자는 적법하게 설치한 Steam 오프라인판 5.0.1.0 파일에만 사용해야 합니다.
-
-소스 코드는 [MIT License](./LICENSE)로 배포됩니다. 게임명, 상표 및 게임 데이터에 대한 권리는 각 권리자에게 있습니다.
-
-## 명령줄
-
-```powershell
-node .\lid-justguard.js status
-node .\lid-justguard.js backup
-node .\lid-justguard.js apply stock off off
-node .\lid-justguard.js apply soft on off
-node .\lid-justguard.js apply wide on on
-node .\lid-justguard.js apply iron on on
-node .\lid-justguard.js restore
-```
-
-설치 폴더 직접 지정 예시:
-
-```powershell
-node .\lid-justguard.js status --game "C:\Program Files (x86)\Steam\steamapps\common\LET IT DIE"
-```
-# 1.4.2: 보스 음파 방어 중 무응답 수정
-
-GitHub `f83adb2`의 근접 방어 해제 ON 프로필에서 `IsCanGuardState` 분기 오류가 확인되었습니다. 보스 `SonarSearchAttack` → 플레이어 피해 처리 → 보스 피해 처리 → 가드 검사 중 명령 인수 종료 토큰으로 진입해 무한 반복했습니다. 그로기 ON/OFF 양쪽의 분기를 런타임 명령 경계 `0x1B`로 수정했습니다. 압축을 풀어 비교한 실제 변경은 각 프로필에서 분기값 1바이트뿐이며, 최신 가드 유지시간·무기 방어·속성 보호 변경은 보존합니다.
-
-게임을 완전히 종료한 뒤 원하는 기존 강도·그로기·근접 방어 설정으로 일반 적용하면 수정본으로 갱신됩니다. 1.4.1 프로필은 구버전으로 인식하며 정확한 이전 XOR 패치를 따로 보관해 순정 `.bak` 없이도 갱신 가능합니다. 자동 백업과 복원은 유지합니다. 기존 `repair-guard-state` 명령은 아래의 특정 구버전 전용이며 이번 업데이트에는 일반 적용을 사용하세요.
-
-실제 설치 파일 복사본으로 구버전 ON → 수정 ON → 수정 OFF → 구버전 ON 해시 왕복 검사와 실행 파일 해시 교체 테스트를 통과했습니다. 2026-09-07 사용자가 실게임에서 보스 음파 방어 재시험 후 크래시가 발생하지 않음을 확인했습니다. 이는 해당 재현 상황의 사용자 확인 결과이며 모든 전투 상황의 무결함을 보장하지는 않습니다.
-
-# 1.4.1: 특정 사용자 수정본의 공격 중 멈춤 복구
-
-2026-09-05 사용자 수정본에서 `BrgPawn_Base.IsCanGuardState`가 조건식 중간으로 점프해 무한 반복하는 문제가 확인되었습니다. `repair-guard-state`는 확인된 SHA-1 `266C9712F6E9EB4FB30110D078BC0377B678B30B`에만 적용됩니다. 기존 공개 프로필 전체에서 발생하는 문제라는 의미는 아닙니다.
-
-게임 종료 후 다음 명령을 실행합니다.
-
-```text
-node lid-justguard.js repair-guard-state --yes --game "C:\Program Files (x86)\Steam\steamapps\common\LET IT DIE"
-```
-
-런타임 점프 목적지 `0x17`을 다음 조건문의 시작인 `0x1B`로 교정합니다. 스크립트 길이와 가드 제한 우회 의도는 유지합니다. 애니메이션·세이브·DB는 수정하지 않고, 실행 파일에서는 BrgGame 해시 두 곳만 갱신해 기존 텐고쿠 네이티브 변경도 보존합니다. 알 수 없는 패키지/해시 불일치는 거부합니다.
-
-변경 전 세 파일을 `backups/guard-repair-*`에 백업합니다. 기존 `restore "백업 폴더" --yes --game "설치 폴더"`로 복원할 수 있지만 오류도 되돌아옵니다. 복구한 사용자 수정본은 기존 강도 변경 프로필과 별개이므로 일반 `apply`/`status`에서 미지원으로 표시될 수 있습니다. 다른 패치로 덮어쓰지 마세요. 정적 검증은 완료했으며 전투 재현 검증은 별도로 필요합니다.
+For support, include tool version, game build, exact error and relevant logs. Avoid publishing your entire save or unnecessary account identifiers.

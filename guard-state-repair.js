@@ -1,4 +1,5 @@
 'use strict';
+const { text: t } = require('./language');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -8,16 +9,16 @@ const hash = (data) => crypto.createHash('sha1').update(data).digest('hex').toUp
 function repairBuffer(source) {
   if (hash(source) === patch.fixedSha1) return Buffer.from(source);
   if (hash(source) !== patch.baseSha1 || source.length !== patch.sourceSize) {
-    throw new Error('이 가드 오류 수정은 확인된 2026-09-05 사용자 수정본만 지원합니다. 다른 파일은 변경하지 않습니다.');
+    throw new Error(t('이 가드 오류 수정은 확인된 2026-09-05 사용자 수정본만 지원합니다. 다른 파일은 변경하지 않습니다.', 'This guard repair supports only the verified user-modified files from 2026-09-05. Other files will not be changed.'));
   }
   const target = Buffer.alloc(patch.targetSize);
   source.copy(target);
   for (const entry of patch.entries) {
     const data = Buffer.from(entry.data, 'base64');
-    if (entry.offset < 0 || entry.offset + data.length > target.length) throw new Error('패치 범위 오류');
+    if (entry.offset < 0 || entry.offset + data.length > target.length) throw new Error(t('패치 범위 오류', 'Patch bounds error'));
     data.copy(target, entry.offset);
   }
-  if (hash(target) !== patch.fixedSha1) throw new Error('수정 파일 해시 검증 실패');
+  if (hash(target) !== patch.fixedSha1) throw new Error(t('수정 파일 해시 검증 실패', 'Repaired file hash verification failed'));
   return target;
 }
 
@@ -30,13 +31,13 @@ function repairExecutable(source, oldHash, newHash) {
     if (at < 0) break;
     const offset = at + needle.length;
     if (out.subarray(offset, offset + 20).toString('hex').toUpperCase() !== oldHash) {
-      throw new Error('실행 파일의 BrgGame 해시가 현재 패키지와 다릅니다.');
+      throw new Error(t('실행 파일의 BrgGame 해시가 현재 패키지와 다릅니다.', 'Executable BrgGame hash does not match the current package.'));
     }
     Buffer.from(newHash, 'hex').copy(out, offset);
     cursor = offset + 20;
     count++;
   }
-  if (count !== 2) throw new Error('실행 파일 해시 항목 수가 예상과 다릅니다.');
+  if (count !== 2) throw new Error(t('실행 파일 해시 항목 수가 예상과 다릅니다.', 'Unexpected number of executable hash entries.'));
   return out;
 }
 
@@ -62,12 +63,12 @@ function repair(game, backupRoot) {
   fs.writeFileSync(path.join(folder, 'backup.json'), JSON.stringify({ format: 1, createdAt: new Date().toISOString(), reason: 'repair-guard-state', gameDirectory: game, files }, null, 2), { flag: 'wx' });
   const replacements = [[upkPath, fixed], [exePath, updatedExe]];
   for (const [file] of replacements) {
-    if (fs.existsSync(file + '.guard-repair.tmp')) throw new Error('이전 임시 파일이 남아 있습니다.');
+    if (fs.existsSync(file + '.guard-repair.tmp')) throw new Error(t('이전 임시 파일이 남아 있습니다.', 'A previous temporary file remains.'));
   }
   try {
     for (const [file, data] of replacements) {
       fs.writeFileSync(file + '.guard-repair.tmp', data, { flag: 'wx' });
-      if (hash(fs.readFileSync(file + '.guard-repair.tmp')) !== hash(data)) throw new Error('임시 파일 검증 실패');
+      if (hash(fs.readFileSync(file + '.guard-repair.tmp')) !== hash(data)) throw new Error(t('임시 파일 검증 실패', 'Temporary file verification failed'));
     }
     for (const [file] of replacements) fs.renameSync(file + '.guard-repair.tmp', file);
   } catch (error) {
