@@ -141,7 +141,7 @@ function identifyProfile(filePath, configuration) {
   const supportedSize = Object.values(configuration.profiles).some((item) => item.sha1 === hash && item.size === size) || (Array.isArray(configuration.size)
     ? configuration.size.includes(size)
     : size === configuration.size);
-  if (!profile && configuration === manifest.groggy && manifest.steamBuildId === '25136512') {
+  if (!profile && configuration === manifest.groggy && ['25136512', '25386710'].includes(manifest.steamBuildId)) {
     const knife = m2gCompat.identify(hash);
     const baseName = knife && Object.entries(configuration.profiles).find(([, p]) => p.sha1 === knife.baseSha1)?.[0];
     if (baseName) return { profile: baseName, hash, size, supportedSize: true, m2g: true, legacyM2g: !!knife.legacy };

@@ -100,6 +100,56 @@
         "size": 179814247,
         "xorBaseSize": 178870689,
         "guardStateBranchFixed": true
+      },
+      "off-off-centered": {
+        "sha1": "B9A5DF604C70A2032971D483A159EC1FBB899E85",
+        "patch": "25386710-groggy-off-off-centered.lidxor",
+        "groggy": "off",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 179426579,
+        "xorBaseSize": 178870689,
+        "warpCentered": true
+      },
+      "off-on-centered": {
+        "sha1": "FFFB87AEDF786A6B324EBF74FD6ACD01A4E1D98E",
+        "patch": "25386710-groggy-off-on-centered.lidxor",
+        "groggy": "off",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 180370138,
+        "xorBaseSize": 178870689,
+        "guardStateBranchFixed": true,
+        "warpCentered": true
+      },
+      "on-off-centered": {
+        "sha1": "4C8213C42476FED4444B0B311D445DC193D418BC",
+        "patch": "25386710-groggy-on-off-centered.lidxor",
+        "groggy": "on",
+        "meleeGuard": "off",
+        "elementalNoDamage": false,
+        "size": 179748467,
+        "xorBaseSize": 178870689,
+        "warpCentered": true
+      },
+      "on-on-centered": {
+        "sha1": "F444D8E8547E8D71B02228DF02917E7622D71C74",
+        "patch": "25386710-groggy-on-on-centered.lidxor",
+        "groggy": "on",
+        "meleeGuard": "on",
+        "elementalNoDamage": true,
+        "aiJustGuardDisabled": true,
+        "pickaxeGuardEnabled": true,
+        "battleAxeGuardEnabled": true,
+        "extendedVfxEnabled": true,
+        "size": 180370137,
+        "xorBaseSize": 178870689,
+        "guardStateBranchFixed": true,
+        "warpCentered": true
       }
     }
   },

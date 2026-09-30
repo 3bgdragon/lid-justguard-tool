@@ -33,4 +33,10 @@ Do not delete an older tool folder until its backups have been preserved. Backup
 
 CLI menus, status displays, confirmations and tool-generated runtime errors support English and Korean. File paths, hashes and stored settings are not translated. System errors follow Windows/Node.js language. This tool does not translate the game itself. Historical release notes remain in the [Korean guide](README.ko.md). Translation does not add support for new game builds.
 
+## 1.8.1-dev compatibility fix
+
+Steam build 25386710 now includes all eight M2G knife-only combinations and four warp-preserving guard profiles. Changing guard settings retains the current M2G firing mode and the Tengoku selector, including its English labels. The bundled M2G rebuild code uses the correct function layout for this build. Use warp tool 1.4.1-dev or newer for the corresponding recognition fix.
+
+Read-only source copies passed all 16 standalone guard settings and all six Warp / Just Guard / M2G installation orders. Combined files were identical across orders; reverse selective removal restored the originals and later cross-mod changes blocked old full-backup restoration. This validates file compatibility, not new in-game combat testing.
+
 For support, include tool version, game build, exact error and relevant logs. Avoid publishing your entire save or unnecessary account identifiers.

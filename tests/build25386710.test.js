@@ -4,12 +4,17 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),crypto=require('node:crypto');
 const {createRequire}=require('node:module');
 const repo=path.resolve(__dirname,'..'),m=require('../assets/manifest-25386710.json');
-test('25386710 manifest includes standalone strengths and runtime combinations',()=>{
+test('25386710 manifest includes standalone strengths and warp-preserving runtime combinations',()=>{
   assert.equal(m.common.profiles.stock.sha1,'2E34F1F72B14B7D18AC701D87FFEBD14A63C94E4');
   assert.equal(m.groggy.profiles['off-off'].sha1,'C1C9738885B6672F61026A3767EAD65A08D7CD51');
   assert.equal(m.common.profiles.soft.duration,0.5);
   assert.equal(Object.keys(m.common.profiles).length,4);
-  assert.equal(Object.keys(m.groggy.profiles).length,4);
+  assert.equal(Object.keys(m.groggy.profiles).length,8);
+  for (const name of ['off-off','off-on','on-off','on-on']) {
+    const profile = m.groggy.profiles[name], centered = m.groggy.profiles[name+'-centered'];
+    assert.equal(centered.warpCentered, true);
+    for (const key of ['groggy','meleeGuard','elementalNoDamage','guardStateBranchFixed']) assert.equal(centered[key], profile[key]);
+  }
   for(const p of [...Object.values(m.common.profiles),...Object.values(m.groggy.profiles)])
     assert.equal(fs.readFileSync(path.join(repo,'assets',p.patch)).subarray(0,8).toString(),'LIDXOR1\0');
 });

@@ -9,6 +9,25 @@ const compat = require('../compat/m2g');
 const { profiles } = require('../compat/m2g/profiles.json');
 const manifest = require('../assets/manifest-25136512.json');
 
+test('25386710 recognizes eight M2G combinations while retaining centered warp state', () => {
+  const latest = require('../assets/manifest-25386710.json');
+  const newer = require('../compat/m2g/profiles-25386710.json').profiles;
+  const source = fs.readFileSync(path.resolve(__dirname, '../lid-justguard.js'), 'utf8');
+  const code = source.slice(source.indexOf('function identifyProfile('), source.indexOf('\nfunction findRuntimeProfile('));
+  assert.equal(newer.length, 8);
+  for (const p of newer) {
+    const key = p.guard + (p.warp ? '-centered' : '');
+    assert.equal(p.baseSha1, latest.groggy.profiles[key].sha1);
+    const context = vm.createContext({ manifest: latest, m2gCompat: compat, sha1File: () => p.sha1, fs: { statSync: () => ({ size: 1 }) } });
+    vm.runInContext(code, context);
+    const found = context.identifyProfile('unused', latest.groggy);
+    assert.equal(found.profile, key);
+    assert.equal(found.m2g, true);
+    assert.equal(found.supportedSize, true);
+    assert.equal(compat.forBase(p.baseSha1).sha256, p.sha256);
+  }
+});
+
 test('reported M2G + warp hash maps to stock guard with centered warp', () => {
   const p = compat.identify('2F408219CE541219B8BB5E6D063919755C2A915A');
   assert.equal(p.baseSha1, manifest.groggy.profiles['off-off-centered'].sha1);
