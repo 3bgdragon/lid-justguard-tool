@@ -1,5 +1,17 @@
 # LET IT DIE Just Guard Tool
 
+Use Node.js 22.5 or newer with shared vending management (SQLite migration needs it).
+
+## Shared composition preview — 1.9.0-dev
+
+Update JG, warp, M2G and vending together. A bundled Node.js kernel validates
+and separates vending in temporary copies, changes guard settings, then recomposes
+vending while preserving warp/M2G. Keep `LID-Mod-State` in the game folder.
+Register old vending installs with option 8 in the new vending tool first.
+Use stock guard settings for selective removal; full shared restore refuses later
+changes. Unknown changes remain blocked. Composition targets build 25386710 and
+needs gameplay verification; legacy build support remains unchanged.
+
 [English](README.md) | [한국어](README.ko.md)
 
 Configures Just Guard timing, groggy reactions, melee guard restrictions and elemental follow-up protection.

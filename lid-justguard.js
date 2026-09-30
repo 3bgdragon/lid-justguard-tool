@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const sharedLayers = require('./shared/layers');
 
 const { configure, text: t } = require('./language');
 const fs = require('fs');
@@ -201,6 +202,11 @@ function inspectExecutable(executablePath, commonHash, groggyHash) {
 }
 
 function readStatus(gameDirectory) {
+  if(sharedLayers.active(gameDirectory))return sharedLayers.view(gameDirectory,stage=>{
+    const status=readStatus(stage);status.gameDirectory=gameDirectory;
+    for(const key of Object.keys(status.paths))status.paths[key]=path.join(gameDirectory,path.relative(stage,status.paths[key]));
+    status.sharedVending=true;return status;
+  });
   selectBuild(gameDirectory);
   const paths = expectedPaths(gameDirectory);
   const common = identifyProfile(paths.common, manifest.common);
@@ -251,6 +257,7 @@ function strengthDisplay(name) {
 }
 
 function printStatus(status) {
+  if(status.sharedVending)console.log(t('공통 합성 관리: 자판기 기능을 보존하며 가드 설정 변경 가능','Shared composition: vending is preserved when changing guard settings'));
   if (t(false, true)) {
     if (manifest.steamBuildId) console.log('New-build trial: file apply/restore verified; in-game combat verification pending');
     console.log(`\nLET IT DIE ${manifest.gameVersion}`);
@@ -470,10 +477,12 @@ function makeEmbeddedTemp(sourcePath, currentProfile, targetProfile, tempPath, e
 }
 
 function backupRoot() {
+  if(process.env.LID_SHARED_STAGE_BACKUP)return process.env.LID_SHARED_STAGE_BACKUP;
   return path.join(__dirname, 'backups');
 }
 
 function createBackup(status, reason) {
+  if(status.sharedVending)return sharedLayers.backup(status.gameDirectory,'guard');
   const directory = path.join(backupRoot(), timestamp());
   fs.mkdirSync(directory, { recursive: true });
   const metadata = {
@@ -509,16 +518,18 @@ function createBackup(status, reason) {
   return directory;
 }
 
-function listBackups() {
+function listBackups(gameDirectory) {
   const root = backupRoot();
-  if (!fs.existsSync(root)) return [];
-  return fs.readdirSync(root, { withFileTypes: true })
+  const shared=gameDirectory?sharedLayers.backups(gameDirectory,'guard'):[];
+  if (!fs.existsSync(root)) return shared;
+  return [...shared,...fs.readdirSync(root, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(root, entry.name, 'backup.json')))
     .map((entry) => path.join(root, entry.name))
-    .sort((left, right) => path.basename(right).localeCompare(path.basename(left)));
+    .sort((left, right) => path.basename(right).localeCompare(path.basename(left)))];
 }
 
 function readAndValidateBackup(directory) {
+  if(sharedLayers.isBackup(directory)){const m=JSON.parse(fs.readFileSync(path.join(directory,'manifest.json'),'utf8'));return {createdAt:path.basename(directory),reason:'shared composition: '+m.kind};}
   const metadataPath = path.join(directory, 'backup.json');
   let metadata;
   try {
@@ -577,6 +588,10 @@ function transactionalReplace(replacements) {
 }
 
 function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) {
+  if(sharedLayers.active(gameDirectory)){
+    const tx=sharedLayers.transact(gameDirectory,'guard',stage=>({result:applySettings(stage,strengthName,groggyName,meleeGuardName)}));
+    return {changed:tx.changed,backupPath:tx.backup,status:readStatus(gameDirectory)};
+  }
   selectBuild(gameDirectory);
   if (!manifest.common.profiles[strengthName]) fail(t(`알 수 없는 강도입니다: ${strengthName}`, `Unknown strength: ${strengthName}`));
   if (!GROGGY_ORDER.includes(groggyName)) fail(t(`알 수 없는 그로기 설정입니다: ${groggyName}`, `Unknown groggy setting: ${groggyName}`));
@@ -636,6 +651,8 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
 }
 
 function restoreBackup(gameDirectory, backupPath) {
+  if(sharedLayers.isBackup(backupPath))return {...sharedLayers.restore(gameDirectory,backupPath),status:readStatus(gameDirectory)};
+  if(sharedLayers.active(gameDirectory))fail(t('공통 레이어가 활성화된 상태에서는 구형 전체 백업을 덮어쓰지 않습니다. 가드를 순정으로 설정하거나 공통 백업을 사용하세요.','Legacy full restore is blocked while shared layers are active. Set guard to stock or use a shared backup.'));
   if (isGameRunning()) fail(t('LET IT DIE가 실행 중입니다. 게임을 완전히 종료한 뒤 다시 실행하세요.', 'LET IT DIE is running. Close the game completely and try again.'));
   const metadata = readAndValidateBackup(backupPath);
   const current = readStatus(gameDirectory);
@@ -753,7 +770,7 @@ async function interactive(gameDirectory, rl) {
       continue;
     }
     if (choice === '3') {
-      const backups = listBackups();
+      const backups = listBackups(gameDirectory);
       if (backups.length === 0) {
         console.log(t('\n복원할 백업이 없습니다.', '\nNo backup available to restore.'));
         continue;
@@ -763,7 +780,7 @@ async function interactive(gameDirectory, rl) {
       console.log(t(`\n복원 대상: ${latest}`, `\nRestore target: ${latest}`));
       console.log(t(`생성 시각: ${info.createdAt}`, `Created: ${info.createdAt}`));
       console.log(t(`사유: ${info.reason}`, `Reason: ${info.reason}`));
-      if (!await confirm(rl, t('이 백업으로 게임 파일 3개를 복원할까요?', 'Restore the three game files from this backup?'), false)) continue;
+      if (!await confirm(rl, sharedLayers.isBackup(latest)?t('공통 백업의 게임 파일 6개와 모드 기록을 복원할까요?', 'Restore six game files and mod state from the shared backup?'):t('이 백업으로 게임 파일 3개를 복원할까요?', 'Restore the three game files from this backup?'), false)) continue;
       const result = restoreBackup(gameDirectory, latest);
       console.log(t(`\n복원 완료: ${result.backupPath}`, `\nRestored: ${result.backupPath}`));
       console.log(t(`복원 직전 안전 백업: ${result.safetyBackup}`, `Pre-restore safety backup: ${result.safetyBackup}`));
@@ -816,7 +833,7 @@ async function main() {
       return;
     }
     if (command === 'restore') {
-      const backups = listBackups();
+      const backups = listBackups(gameDirectory);
       const backupPath = parsed.positional[1] ? path.resolve(parsed.positional[1]) : backups[0];
       if (!backupPath) fail(t('복원할 백업이 없습니다.', 'No backup available to restore.'));
       readAndValidateBackup(backupPath);
