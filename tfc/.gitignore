@@ -1,3 +1,4 @@
 .integration-temp/
+generated/
 *.tmp
 *.rollback

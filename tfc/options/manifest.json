@@ -1,0 +1,30 @@
+{
+  "build": "25386710",
+  "elementalIndependent": false,
+  "assets": {
+    "common-iron.PackagePatch": {
+      "sha256": "ff010bd6af114542c9578cd70b5c561908003175cdffb2211ab9c99aa36408fb",
+      "size": 11375
+    },
+    "common-soft.PackagePatch": {
+      "sha256": "63f8e10ec82fa6d06142d7b135139f53be7a368232bef77cb507af8ac0857e76",
+      "size": 11375
+    },
+    "common-wide.PackagePatch": {
+      "sha256": "f053ab48c06ebdf221781a855d56d9e0450853d9ff28483c0dfbb850ce59e5ba",
+      "size": 11375
+    },
+    "groggy-off-on.PackagePatch": {
+      "sha256": "4c5e3353a8788b132d2be4ea78914e267cc917909ea04d6fecdcc21612405534",
+      "size": 8919
+    },
+    "groggy-on-off.PackagePatch": {
+      "sha256": "612a4accbff7d18b751157976e944b348efc8e578c55f33923de1a0fbcc1f521",
+      "size": 13211
+    },
+    "groggy-on-on.PackagePatch": {
+      "sha256": "71f0a650273a7480ce4c5c7420173bc5a9c51ac1ea907eb7fda09f4422e3f9b3",
+      "size": 21126
+    }
+  }
+}

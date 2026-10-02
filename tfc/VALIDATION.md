@@ -2,6 +2,15 @@
 
 Reviewed Steam build 25386710, package version 861/19.
 
+## Configurable preset follow-up
+
+- 4 timing choices x 2 Groggy x 2 melee choices: 15 non-stock mod folders generated; all-stock configuration instructs removal.
+- Six reviewed variant assets exported via the official library and applied/reopened through the actual TFC engine.
+- All common variants preserve their 5 expected objects; runtime variants combined with warp/M2G/vending preserve 15 / 20 / 21 expected objects.
+- Original soft/on/on generated assets are byte-identical to the user-playtested fixed release.
+- Independent elemental protection combinations are explicitly rejected. No independent elemental bytecode change or new game test is claimed.
+- No real game files were changed during these option tests.
+
 - Actual UPK Explorer / TFC Installer 2.5.6.0 UPK.Utils.dll and native LZO used.
 - BrgGame patches: guard 7, warp 2, M2G 1, vending 11 objects; all 21 are disjoint.
 - All 24 orders serialized/reopened and retained every expected object payload.
