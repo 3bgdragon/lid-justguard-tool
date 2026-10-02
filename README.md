@@ -20,7 +20,7 @@ no-validation mode or a guarantee of compatibility with every EXE mod.
 
 Use Node.js 22.5 or newer with shared vending management (SQLite migration needs it).
 
-## Shared composition preview — 1.9.0-dev
+## Shared composition preview — 1.9.1-dev
 
 Update JG, warp, M2G and vending together. A bundled Node.js kernel validates
 and separates vending in temporary copies, changes guard settings, then recomposes
