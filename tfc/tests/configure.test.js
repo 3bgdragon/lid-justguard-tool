@@ -10,8 +10,9 @@ test('reviewed 4 timing x 2 groggy x 2 melee configurations generate isolated na
   if(strength==='stock'&&!groggy&&!melee){assert.throws(()=>api.generate(config,root),/All stock/);continue;}
   const result=api.generate(config,root),dir=path.join(result.output,'Game/BrgGame/CookedPCConsole');
   assert(fs.existsSync(path.join(result.output,'run-tfc.bat')));assert(!fs.existsSync(path.join(result.output,'run.bat')));
-  assert.equal(fs.existsSync(path.join(dir,'AS_CH_Main_Male_Common_SF.PackagePatch')),strength!=='stock');
-  assert.equal(fs.existsSync(path.join(dir,'BrgGame.PackagePatch')),groggy||melee);
+  assert.equal(fs.existsSync(path.join(dir,'AS_CH_Main_Male_Common_SF.upk.PackagePatch')),strength!=='stock');
+  assert.equal(fs.existsSync(path.join(dir,'BrgGame.upk.PackagePatch')),groggy||melee);
+  assert(!fs.readFileSync(path.join(result.output,'GameProfile.xml'),'utf8').includes('DISPOSABLE'));
   assert(!fs.existsSync(path.join(result.output,'Game/Binaries')));assert(!fs.existsSync(path.join(result.output,'Game/BrgGame/Content')));
   const settings=JSON.parse(fs.readFileSync(path.join(result.output,'settings.json')));
   assert.equal(settings.timing.duration,api.STRENGTHS[strength].duration);

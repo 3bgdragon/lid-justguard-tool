@@ -12,8 +12,8 @@ function generate(input,outputRoot=path.join(__dirname,'generated')){
  const config=validate(input);
  if(config.strength==='stock'&&!config.groggy&&!config.melee)throw Error('All stock: remove the guard UPK patch in TFC, then Sync hashes. / 모두 순정이면 TFC에서 가드 패치를 제거한 뒤 해시 연결을 실행하세요.');
  const source=__dirname,patches=[];
- if(config.strength!=='stock')patches.push(['common-'+config.strength+'.PackagePatch','AS_CH_Main_Male_Common_SF.PackagePatch']);
- if(config.groggy||config.melee)patches.push(['groggy-'+(config.groggy?'on':'off')+'-'+(config.melee?'on':'off')+'.PackagePatch','BrgGame.PackagePatch']);
+ if(config.strength!=='stock')patches.push(['common-'+config.strength+'.PackagePatch','AS_CH_Main_Male_Common_SF.upk.PackagePatch']);
+ if(config.groggy||config.melee)patches.push(['groggy-'+(config.groggy?'on':'off')+'-'+(config.melee?'on':'off')+'.PackagePatch','BrgGame.upk.PackagePatch']);
  const verified=patches.map(([file,target])=>{
   const bytes=fs.readFileSync(path.join(source,'options',file)),expected=catalog.assets[file];
   if(!expected||bytes.length!==expected.size||crypto.createHash('sha256').update(bytes).digest('hex')!==expected.sha256)throw Error('Option patch damaged: '+file);

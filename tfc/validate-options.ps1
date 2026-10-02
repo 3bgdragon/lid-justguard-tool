@@ -27,7 +27,7 @@ foreach($variant in @('common-soft','common-wide','common-iron','groggy-off-on',
  $dir=Join-Path $root $variant;New-Item -ItemType Directory $dir|Out-Null
  $updater=[UPK.Utils.Adapters.Updaters.PackageUpdater]::new($adapter,$loaded.p,$dir)
  $patchFiles=@("$PSScriptRoot/options/$variant.PackagePatch")
- if(!$common){foreach($other in @('02-Tengoku-Warp','03-M2G-Knife','04-Vending')){$patchFiles+=,"$OtherPatchRoot/$other/Game/BrgGame/CookedPCConsole/BrgGame.PackagePatch"}}
+ if(!$common){foreach($other in @('02-Tengoku-Warp','03-M2G-Knife','04-Vending')){$patchFiles+=,"$OtherPatchRoot/$other/Game/BrgGame/CookedPCConsole/BrgGame.upk.PackagePatch"}}
  $expected=@{}
  foreach($patchFile in $patchFiles){
   $patch=[UPK.Utils.GamePatches.PackagePatch]::new();$patch.Read($patchFile,$loaded.p.Profile)
