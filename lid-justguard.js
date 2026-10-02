@@ -792,11 +792,11 @@ async function interactive(gameDirectory, rl) {
 
 async function main() {
   const parsed = parseCommandLine(configure(process.argv.slice(2), __dirname));
-  const gameDirectory = discoverGameDirectory(parsed.gameDirectory);
   const command = String(parsed.positional[0] || '').toLowerCase();
   const interactiveMode = !command;
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
+    const gameDirectory = await require('./game-path').choose({input:parsed.gameDirectory,detect:()=>discoverGameDirectory(),files:[manifest.common.relativePath,manifest.groggy.relativePath,manifest.executable.relativePath],ask:q=>rl.question(q),interactive:interactiveMode||Boolean(process.stdin.isTTY),t});
     if (interactiveMode) {
       await interactive(gameDirectory, rl);
       return;
