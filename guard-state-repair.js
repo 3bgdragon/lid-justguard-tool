@@ -24,20 +24,15 @@ function repairBuffer(source) {
 
 function repairExecutable(source, oldHash, newHash) {
   const out = Buffer.from(source);
-  const needle = Buffer.from('brggame.upk\0');
-  let cursor = 0, count = 0;
-  for (;;) {
-    const at = out.indexOf(needle, cursor);
-    if (at < 0) break;
-    const offset = at + needle.length;
-    if (out.subarray(offset, offset + 20).toString('hex').toUpperCase() !== oldHash) {
+  let entries;
+  try { entries = require('./shared/kernel/src/executable-links').digestEntries(source, 'brggame.upk', 2); }
+  catch (error) { throw new Error(t('실행 파일 해시 항목 수 또는 구조가 예상과 다릅니다.', 'Unexpected executable hash entry count or structure.') + ' ' + error.message); }
+  for (const {offset, checked} of entries) {
+    if (checked && out.subarray(offset, offset + 20).toString('hex').toUpperCase() !== oldHash) {
       throw new Error(t('실행 파일의 BrgGame 해시가 현재 패키지와 다릅니다.', 'Executable BrgGame hash does not match the current package.'));
     }
     Buffer.from(newHash, 'hex').copy(out, offset);
-    cursor = offset + 20;
-    count++;
   }
-  if (count !== 2) throw new Error(t('실행 파일 해시 항목 수가 예상과 다릅니다.', 'Unexpected number of executable hash entries.'));
   return out;
 }
 

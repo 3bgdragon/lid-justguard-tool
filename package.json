@@ -1,11 +1,11 @@
 {
   "name": "lid-justguard-tool",
-  "version": "1.9.1-dev",
+  "version": "1.9.2-rc.1",
   "description": "LET IT DIE 5.0.1.0 offline Just Guard timing, melee elemental protection and Groggy patch/restore tool",
   "license": "MIT",
   "private": false,
   "engines": {
-    "node": ">=18"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "check": "node --check lid-justguard.js && node --check guard-state-repair.js",

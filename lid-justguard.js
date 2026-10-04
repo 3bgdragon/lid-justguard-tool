@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const sharedLayers = require('./shared/layers');
+const ownedFunctions = require('./shared/owned-functions');
 
 const { configure, text: t } = require('./language');
 const fs = require('fs');
@@ -147,6 +148,12 @@ function identifyProfile(filePath, configuration) {
     const baseName = knife && Object.entries(configuration.profiles).find(([, p]) => p.sha1 === knife.baseSha1)?.[0];
     if (baseName) return { profile: baseName, hash, size, supportedSize: true, m2g: true, legacyM2g: !!knife.legacy };
   }
+  if(!profile&&manifest.steamBuildId==='25386710'){
+    try{
+      const file=path.basename(filePath),state=ownedFunctions.inspect(fs.readFileSync(filePath),'guard',file);
+      return {profile:state==='off'?(configuration===manifest.common?'stock':'off-off'):state,hash,size,supportedSize:true,scoped:true};
+    }catch(error){return {profile:null,hash,size,supportedSize:false,conflict:error.message};}
+  }
   return { profile, hash, size, supportedSize };
 }
 
@@ -178,6 +185,11 @@ function findAll(buffer, needle) {
 }
 
 function manifestDigestPositions(executable, assetName, expectedCount) {
+  const pe = executable.length >= 64 ? executable.readUInt32LE(60) : 0;
+  if (pe && pe + 4 <= executable.length && executable.toString('ascii', pe, pe + 4) === 'PE\0\0') {
+    try { return require('./shared/kernel/src/executable-links').digestOffsets(executable, assetName, expectedCount); }
+    catch (error) { fail(error.message); }
+  }
   const needle = Buffer.from(`${assetName.toLowerCase()}\0`, 'ascii');
   const positions = findAll(executable, needle);
   if (positions.length !== expectedCount) {
@@ -196,7 +208,8 @@ function inspectExecutable(executablePath, commonHash, groggyHash) {
   for (const [assetName, expectedCount] of Object.entries(manifest.executable.manifestEntries)) {
     const offsets = manifestDigestPositions(executable, assetName, expectedCount);
     const digests = offsets.map((offset) => executable.subarray(offset, offset + 20).toString('hex').toUpperCase());
-    results[assetName] = { offsets, digests, valid: digests.every((value) => value === expected[assetName]) };
+    const records = require('./shared/kernel/src/executable-links').digestEntries(executable, assetName, expectedCount);
+    results[assetName] = { offsets, digests, checkDisabled: records.every(e => !e.checked), valid: records.every((e, i) => !e.checked || digests[i] === expected[assetName]) };
   }
   return results;
 }
@@ -232,6 +245,9 @@ function selectBuild(gameDirectory) {
       STOCK_HASHES['brggame.upk'] = candidate.groggy.profiles['off-off'].sha1;
       STOCK_HASHES['as_ch_main_male_common_sf.upk'] = candidate.common.profiles.stock.sha1;
       return;
+    }
+    if(build==='25386710'){
+      try{ownedFunctions.inspect(fs.readFileSync(file),'guard',path.basename(file));manifest=candidate;return;}catch{}
     }
   }
 }
@@ -286,6 +302,8 @@ function printStatus(status) {
       console.log('Melee elemental follow-up damage: Unknown');
     }
     console.log(`Executable hash links: ${executableIsValid(status) ? 'Valid' : 'Mismatch/unknown'}`);
+    const disabled = Object.entries(status.executable || {}).filter(([, e]) => e.checkDisabled).map(([name]) => name);
+    if (disabled.length) console.log('External manager file checks OFF (preserved): ' + disabled.join(', '));
     return;
   }
   if (manifest.steamBuildId) console.log('새 빌드 대응 시험판: 파일 적용·복원 검증 완료 / 실게임 전투 검증 전');
@@ -325,6 +343,8 @@ function printStatus(status) {
     console.log('근접 속성 후속 피해: 알 수 없음');
   }
   console.log(`실행 파일 해시 연결: ${executableIsValid(status) ? '정상' : '불일치/확인 불가'}`);
+  const disabled = Object.entries(status.executable || {}).filter(([, e]) => e.checkDisabled).map(([name]) => name);
+  if (disabled.length) console.log('외부 관리자의 파일 검사 OFF (유지): ' + disabled.join(', '));
 }
 
 function readPatch(patchPath) {
@@ -587,9 +607,31 @@ function transactionalReplace(replacements) {
   }
 }
 
+function applyScopedGuardFiles(stage,strengthName,groggyName,meleeGuardName){
+  if(!['stock','soft','wide','iron'].includes(strengthName)||!['on','off'].includes(groggyName)||!['on','off'].includes(meleeGuardName))fail('Invalid scoped guard settings');
+  const runtimeName=groggyName+'-'+meleeGuardName;
+  const packages=[['AS_CH_Main_Male_Common_SF.upk',strengthName==='stock'?'off':strengthName],['BrgGame.upk',runtimeName==='off-off'?'off':runtimeName]];
+  const executablePath=path.join(stage,'Binaries/Win64/BrgGame-Steam.exe'),exe=fs.readFileSync(executablePath);
+  require('./shared/kernel/src/executable-links').validatePackageLinks(exe,stage);
+  const next=Buffer.from(exe),writes=[];
+  for(const [file,preset] of packages){
+    const p=path.join(stage,'BrgGame/CookedPCConsole',file),before=fs.readFileSync(p),after=ownedFunctions.set(before,'guard',file,preset);
+    ownedFunctions.verifyTransition(before,after,'guard',file);
+    const count=file==='BrgGame.upk'?2:1;
+    for(const at of manifestDigestPositions(next,file.toLowerCase(),count))crypto.createHash('sha1').update(after).digest().copy(next,at);
+    writes.push([p,after]);
+  }
+  // Both packages and their link changes are fully checked before even staging writes.
+  for(const [p,after] of writes)fs.writeFileSync(p,after);
+  fs.writeFileSync(executablePath,next);
+  return {guard:strengthName,groggy:groggyName,melee:meleeGuardName};
+}
 function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) {
   if(sharedLayers.active(gameDirectory)){
-    const tx=sharedLayers.transact(gameDirectory,'guard',stage=>({result:applySettings(stage,strengthName,groggyName,meleeGuardName)}));
+    const tx=sharedLayers.transact(gameDirectory,'guard',stage=>{
+      selectBuild(stage);
+      return {result:manifest.steamBuildId==='25386710'?applyScopedGuardFiles(stage,strengthName,groggyName,meleeGuardName):applySettings(stage,strengthName,groggyName,meleeGuardName)};
+    });
     return {changed:tx.changed,backupPath:tx.backup,status:readStatus(gameDirectory)};
   }
   selectBuild(gameDirectory);
@@ -602,6 +644,12 @@ function applySettings(gameDirectory, strengthName, groggyName, meleeGuardName) 
 
   const status = readStatus(gameDirectory);
   assertSupported(status);
+  if(manifest.steamBuildId==='25386710'&&!process.env.LID_SHARED_STAGE_BACKUP&&sharedLayers.FILES.every(f=>fs.existsSync(path.join(gameDirectory,f)))){
+    const tx=sharedLayers.transact(gameDirectory,'guard',stage=>{
+      return {result:applyScopedGuardFiles(stage,strengthName,groggyName,meleeGuardName)};
+    },{compact:true});
+    return {changed:tx.changed,backupPath:tx.backup,status:readStatus(gameDirectory)};
+  }
   if (manifest.groggy.profiles[status.groggy.profile].warpCentered && manifest.groggy.profiles[targetRuntimeName + '-centered']) {
     targetRuntimeName += '-centered';
   }
