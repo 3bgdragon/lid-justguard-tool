@@ -1,6 +1,6 @@
 {
   "name": "lid-justguard-tool-tfc",
-  "version": "1.2.0-rc.2",
+  "version": "1.2.1-rc.1",
   "private": true,
   "description": "Just Guard — separate TFC distribution; not the standalone tool",
   "engines": {

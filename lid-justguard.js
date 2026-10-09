@@ -276,7 +276,7 @@ function printStatus(status) {
   if(status.sharedVending)console.log(t('공통 합성 관리: 자판기 기능을 보존하며 가드 설정 변경 가능','Shared composition: vending is preserved when changing guard settings'));
   if (t(false, true)) {
     if (manifest.steamBuildId) console.log('New-build trial: file apply/restore verified; in-game combat verification pending');
-    console.log(`\nLET IT DIE ${manifest.gameVersion}`);
+    console.log(`\nLET IT DIE ${manifest.steamBuildId==='25386710'?'reviewed UPK layouts: Steam builds 25386710 / 25767944':manifest.gameVersion}`);
     console.log(`Installation: ${status.gameDirectory}`);
     if (status.common.profile) {
       const profile = manifest.common.profiles[status.common.profile];
@@ -307,7 +307,7 @@ function printStatus(status) {
     return;
   }
   if (manifest.steamBuildId) console.log('새 빌드 대응 시험판: 파일 적용·복원 검증 완료 / 실게임 전투 검증 전');
-  console.log(`\nLET IT DIE ${manifest.gameVersion}`);
+  console.log(`\nLET IT DIE ${manifest.steamBuildId==='25386710'?'UPK 검증 지원: Steam 빌드 25386710 / 25767944':manifest.gameVersion}`);
   console.log(`설치 폴더: ${status.gameDirectory}`);
   if (status.common.profile) {
     const profile = manifest.common.profiles[status.common.profile];

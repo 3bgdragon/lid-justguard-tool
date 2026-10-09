@@ -25,8 +25,8 @@ function generate(input,outputRoot=path.join(__dirname,'generated')){
   const game=path.join(output,'Game/BrgGame/CookedPCConsole');fs.mkdirSync(game,{recursive:true});
   for(const patch of verified)fs.writeFileSync(path.join(game,patch.target),patch.bytes);
   for(const name of ['runtime','GameProfile.xml','companion.js','run-tfc.bat','COMPANION.md','START-HERE.ko.md'])fs.cpSync(path.join(source,name),path.join(output,name),{recursive:true});
-  fs.writeFileSync(path.join(output,'ModInfo.xml'),'<ModInfo name="Just Guard '+config.strength+' / Groggy '+config.groggy+' / Melee '+config.melee+' / Elemental '+config.elemental+' — build 25386710" />\n');
-  fs.writeFileSync(path.join(output,'settings.json'),JSON.stringify({build:'25386710',...config,timing:STRENGTHS[config.strength],elementalIndependent:false},null,2)+'\n');
+  fs.writeFileSync(path.join(output,'ModInfo.xml'),'<ModInfo name="Just Guard '+config.strength+' / Groggy '+config.groggy+' / Melee '+config.melee+' / Elemental '+config.elemental+' — reviewed builds 25386710 / 25767944" />\n');
+  fs.writeFileSync(path.join(output,'settings.json'),JSON.stringify({builds:['25386710','25767944'],...config,timing:STRENGTHS[config.strength],elementalIndependent:false},null,2)+'\n');
   fs.writeFileSync(path.join(output,'README.txt'),'Close the game. REMOVE the old guard UPK mod with TFC, then run run-tfc.bat in THIS folder -> 5. Prepare compatible TFC package. Install the new PREPARED folder with TFC and run run-tfc.bat in the prepared folder -> 1. Finish installation. Do not stack guard presets. Other TFC mods should remain installed.\n게임 종료 후 TFC에서 이전 가드 모드를 제거하고 이 폴더의 run-tfc.bat -> 5번으로 호환 패키지를 준비하세요. 새 준비 폴더를 TFC에 적용한 뒤 준비 폴더의 run-tfc.bat -> 1번으로 마무리하세요. 가드 프리셋은 중복 적용하지 마세요.\nElemental protection currently follows melee protection; independent combinations are rejected.\n속성 피해 차단은 현재 근접 방어와 연동되며, 독립 조합은 생성하지 않습니다.\n');
   return {output,config};
  }catch(error){error.message+='\nIncomplete generated folder (do not install): '+output;throw error;}
