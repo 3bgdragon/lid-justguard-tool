@@ -1,8 +1,8 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const owned=require('../shared/owned-functions'),catalog=require('../shared/owned-functions-26639365.json'),audit=require('../shared/ui-audit-26639365.json');
-test('26639365 keeps separate exact stock metadata and 95 reviewed presets',()=>{
- assert.equal(catalog.exportCount,173769);assert.equal(catalog.objects.length,95);assert.equal(new Set(catalog.objects.map(p=>p.name)).size,22);
+test('26639365 keeps separate exact stock metadata and 97 reviewed preset entries',()=>{
+ assert.equal(catalog.exportCount,173769);assert.equal(catalog.objects.length,97);assert.equal(new Set(catalog.objects.map(p=>p.name)).size,23);
  for(const p of catalog.objects){assert.equal(p.build,26639365);assert.equal(owned.sha(Buffer.from(p.off,'base64')),p.offHash);assert.equal(owned.sha(Buffer.from(p.on,'base64')),p.onHash);}
  assert.deepEqual(audit.custom,{decalsMenu:7,ammoMenu:8,modalState:23,normalState:7,shopStateBase:23});
  assert.equal(catalog.objects.find(p=>p.name==='BrgUIMenu_ItemVendingMachine.SetupTopMenu').offHash,'00d69d67cba35651153afdf24b328858e724afb778f118f23646ca3624dfe428');

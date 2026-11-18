@@ -1,7 +1,7 @@
 [
   {
     "oldSha256": "4c5e3353a8788b132d2be4ea78914e267cc917909ea04d6fecdcc21612405534",
-    "sha256": "ebc7a3cce1bb10ed056ce60aa05a171ce9c05484a75b2c3b34dae3e3f3dfdec7",
+    "sha256": "b60df1fb81946de1ef6b0d980f39fa4e777b3339fd354f0fd82331f89c00f3f2",
     "file": "4c5e3353a8788b132d2be4ea78914e267cc917909ea04d6fecdcc21612405534.PackagePatch"
   },
   {
@@ -11,7 +11,7 @@
   },
   {
     "oldSha256": "71f0a650273a7480ce4c5c7420173bc5a9c51ac1ea907eb7fda09f4422e3f9b3",
-    "sha256": "e5590b7faac99e39d5efe1bc2c1a89b57dcc3655769b3721d518040760fa52c4",
+    "sha256": "72217be4aeaed42a98e6b1c496a0fa09b344e62a5cf7ea4d4b3cf9d1252a5752",
     "file": "71f0a650273a7480ce4c5c7420173bc5a9c51ac1ea907eb7fda09f4422e3f9b3.PackagePatch"
   },
   {

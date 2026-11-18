@@ -150,7 +150,20 @@ function identifyProfile(filePath, configuration) {
   }
   if(!profile&&manifest.steamBuildId==='25386710'){
     try{
-      const file=path.basename(filePath),state=ownedFunctions.inspect(fs.readFileSync(filePath),'guard',file);
+      const file=path.basename(filePath), source=fs.readFileSync(filePath);
+      let state;
+      try { state=ownedFunctions.inspect(source,'guard',file); }
+      catch (error) {
+        if(file!=='BrgGame.upk'||source.readUInt32LE(0x21)!==173769)throw error;
+        const rows=ownedFunctions.objects(source,'guard',file).rows;
+        const callback=rows.find(row=>row.index===53097);
+        if(!callback||!callback.bytes.equals(callback.variants[0].off))throw error;
+        const previous=rows.filter(row=>row!==callback);
+        const legacy=['off-on','on-on'].find(preset=>previous.every(row=>
+          ownedFunctions.merge(row.bytes,row.variants,preset).equals(row.bytes)));
+        if(!legacy)throw error;
+        return {profile:legacy,hash,size,supportedSize:true,scoped:true,needsElementUpdate:true};
+      }
       return {profile:state==='off'?(configuration===manifest.common?'stock':'off-off'):state,hash,size,supportedSize:true,scoped:true};
     }catch(error){return {profile:null,hash,size,supportedSize:false,conflict:error.message};}
   }
@@ -292,6 +305,7 @@ function printStatus(status) {
       console.log(`Just Guard groggy: ${groggyLabel(runtime.groggy)}`);
       console.log(`Melee guard restrictions: ${meleeGuardLabel(runtime.meleeGuard)}`);
       console.log(`Melee elemental follow-up damage: ${runtime.elementalNoDamage ? 'Blocked on Just Guard' : 'Stock'}`);
+      if (status.groggy.needsElementUpdate) console.log('Reapply to enable the updated elemental cleanse.');
       if (runtime.aiJustGuardDisabled) console.log('Enemy AI Just Guard: disabled (player only)');
       if (runtime.pickaxeGuardEnabled) console.log('Pickaxe attacks: Just Guard allowed');
       if (runtime.battleAxeGuardEnabled) console.log('Battle axe attacks: Just Guard allowed');
@@ -325,6 +339,7 @@ function printStatus(status) {
     console.log(`저스트가드 그로기: ${groggyLabel(runtime.groggy)}`);
     console.log(`근접무기 방어 제한: ${meleeGuardLabel(runtime.meleeGuard)}`);
     console.log(`근접 속성 후속 피해: ${runtime.elementalNoDamage ? '저스트가드 시 차단' : '순정'}`);
+    if (status.groggy.needsElementUpdate) console.log('속성 해제 수정을 적용하려면 현재 설정으로 다시 적용하세요.');
     if (runtime.aiJustGuardDisabled) {
       console.log('적 AI 저스트가드: 차단 (플레이어 전용)');
     }
